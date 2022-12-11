@@ -1,6 +1,7 @@
 #include <chrono>
 #include <fstream>
 #include <functional>
+#include <limits>
 #include <iostream>
 #include <string>
 
@@ -46,7 +47,8 @@ int main()
                          Problem{day07, {"x", "x"}},
                          Problem{day08, {"1543", "595080"}},
                          Problem{day09, {"5874", "x"}},
-                         Problem{day10, {"13920", "10069953020766180745"}}};
+                         Problem{day10, {"13920", "10069953020766180745"}},
+                         Problem{day11, {"67830", "15305381442"}}};
 
   cout << std::format(table_div, "") << std::endl;
   cout << std::format(header_row, "Problem", "Solution", "Fail", "E.T. Mean",
@@ -64,7 +66,7 @@ int main()
     cout << "Execution times are specified in microseconds.  Number of runs: "
          << kNumRuns << std::endl;
   } else {
-    cout << "Benchmarks was not run. Execution times are invalid. "
+    cout << "Benchmarks were not run. Execution times are invalid. "
          << std::endl;
   }
 
@@ -99,7 +101,7 @@ Benchmark benchmark(Problem p, std::ifstream& file, std::int8_t part)
 
   steady_clock::time_point start;
   Benchmark b;
-  b.minimum = INT64_MAX;
+  b.minimum = std::numeric_limits<std::int64_t>::max();
 
   std::vector<std::int64_t> v;
 
