@@ -2,7 +2,11 @@
 
 #include <iostream>
 
+#include "HeightMap.h"
+
 Device::Device() { screen.fill(std::string(screen_size_x, '.')); }
+
+Device::~Device() = default;
 
 void Device::processCommandStream(std::istream& in)
 {

@@ -48,7 +48,8 @@ int main()
                          Problem{day08, {"1543", "595080"}},
                          Problem{day09, {"5874", "x"}},
                          Problem{day10, {"13920", "10069953020766180745"}},
-                         Problem{day11, {"67830", "15305381442"}}};
+                         Problem{day11, {"67830", "15305381442"}},
+                         Problem{day12, {"456", "454"}}};
 
   cout << std::format(table_div, "") << std::endl;
   cout << std::format(header_row, "Problem", "Solution", "Fail", "E.T. Mean",
@@ -78,7 +79,10 @@ void solve(Problem p, std::int32_t day)
   for (std::int8_t part = 0; part < kNumParts; ++part) {
     std::ifstream file(std::format("input/day{:02}.txt", day + 1));
 
-    Solution s = p.solve(file, part + 1);
+    Solution s;
+    if (p.solve) {
+      s = p.solve(file, part + 1);
+    }
 
     Benchmark b;
     if (kBenchmark) {

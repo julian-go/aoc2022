@@ -5,17 +5,23 @@
 #include <istream>
 #include <string>
 
+#include "HeightMap.h"
+
 class Device {
  public:
   Device();
-  virtual ~Device() = default;
+  virtual ~Device();
 
-  void processCommandStream(std::istream& in);  // day 10
-
+  // day 10
+  void processCommandStream(std::istream& in);
   std::int32_t getTotalSignalStrength() const;  // day10-1
   std::string render(bool show) const;          // day10-2
 
+  // day 12
+  HeightMap height_map;
+
  private:
+  // day 10
   static constexpr std::int32_t screen_size_x = 40;
   static constexpr std::int32_t screen_size_y = 6;
 
