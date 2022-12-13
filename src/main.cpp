@@ -118,7 +118,9 @@ Benchmark benchmark(Problem p, std::ifstream& file, std::int8_t part)
 
     start = steady_clock::now();
 
-    p.solve(file, part);
+    if (p.solve) {
+      p.solve(file, part);
+    }
 
     auto elapsed =
         duration_cast<microseconds>(steady_clock::now() - start).count();

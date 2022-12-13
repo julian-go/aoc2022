@@ -1,6 +1,5 @@
-#include "solutions.h"
-
 #include "Device.h"
+#include "solutions.h"
 
 namespace {
 
