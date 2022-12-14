@@ -2,6 +2,7 @@
 #define VECTOR_2D_
 
 #include <cstdint>
+#include <iostream>
 
 struct Vector2D {
   constexpr Vector2D() : x(0), y(0){};
@@ -13,6 +14,13 @@ struct Vector2D {
   Vector2D operator+(const Vector2D& r) const
   {
     return Vector2D(x + r.x, y + r.y);
+  }
+
+  Vector2D& operator+=(const Vector2D& r)
+  {
+    x += r.x;
+    y += r.y;
+    return *this;
   }
 
   Vector2D operator-(const Vector2D& r) const
