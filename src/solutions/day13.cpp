@@ -179,10 +179,10 @@ inline Solution part1(std::ifstream& in)
     // std::cout << *p2 << std::endl;
     //   std::cout << (*p1 < *p2) << std::endl;
     if (*p1 < *p2) {
-      std::cout << idx << " true" << std::endl;
+      //std::cout << idx << " true" << std::endl;
       idx_sum += idx;
     } else {
-      std::cout << idx << " false" << std::endl;
+      //std::cout << idx << " false" << std::endl;
     }
     std::getline(in, tmp);  // skip empty line
     idx++;

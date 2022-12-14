@@ -15,7 +15,7 @@ constexpr const char* table_row =
     "| {:<10} | {:<22} | {:^4} | {:>10.2f} | {:>10.2f} | {:>10} | {:>10} |";
 constexpr std::int32_t kNumRuns = 100;
 constexpr std::int8_t kNumParts = 2;
-constexpr bool kBenchmark = false;
+constexpr bool kBenchmark = true;
 
 using Solve = std::function<Solution(std::ifstream&, std::int8_t part)>;
 
@@ -49,7 +49,9 @@ int main()
                          Problem{day09, {"5874", "x"}},
                          Problem{day10, {"13920", "10069953020766180745"}},
                          Problem{day11, {"67830", "15305381442"}},
-                         Problem{day12, {"456", "454"}}};
+                         Problem{day12, {"456", "454"}},
+                         Problem{day13, {"6101", "21909"}},
+                         Problem{day14, {"1001", "27976"}}};
 
   cout << std::format(table_div, "") << std::endl;
   cout << std::format(header_row, "Problem", "Solution", "Fail", "E.T. Mean",
@@ -86,7 +88,7 @@ void solve(Problem p, std::int32_t day)
 
     Benchmark b;
     if (kBenchmark) {
-      b = benchmark(p, file, 1);
+      b = benchmark(p, file, part + 1);
     }
 
     std::string problem = std::format("day{:02}-{}", day + 1, part + 1);
