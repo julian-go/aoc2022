@@ -1,18 +1,30 @@
+#include <iostream>
+#include <string>
+
 #include "solutions.h"
 
 namespace {
 
-inline Solution part1(std::ifstream& in)
+template<size_t kSyncLength>
+inline Solution findSyncPosition(std::ifstream& in)
 {
-  Solution s = std::to_string(0);
-  return s;
-}
+  size_t sync_start = 0;
+  std::string message;
 
-inline Solution part2(std::ifstream& in)
-{
-  
-  Solution s = std::to_string(0);
-  return s;
+  in >> message;
+
+  for (size_t i = 1; i < message.size(); ++i) {
+    for (size_t j = sync_start; j < i; ++j) {
+      if (message[j] == message[i]) {
+        sync_start = j + 1;
+      }
+    }
+    if (i - sync_start == kSyncLength - 1) {
+      return std::to_string(i + 1);
+    }
+  }
+
+  return "ERROR";
 }
 
 }  // namespace
@@ -20,8 +32,8 @@ inline Solution part2(std::ifstream& in)
 Solution day06(std::ifstream& in, std::int8_t part)
 {
   if (part == 1) {
-    return part1(in);
+    return findSyncPosition<4>(in);
   } else {
-    return part2(in);
+    return findSyncPosition<14>(in);
   }
 }
