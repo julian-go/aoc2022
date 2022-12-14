@@ -1,7 +1,6 @@
 #include <array>
 #include <functional>
 #include <iostream>
-#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -12,8 +11,10 @@
 namespace {
 
 struct Cave {
-  std::set<Vector2D> occupied;
-  static constexpr Vector2D spawn = Vector2D(500, 0);
+  static constexpr int32_t kMaxHeight = 500;
+  static constexpr int32_t kMaxWidth = 2 * kMaxHeight - 1;
+  static constexpr Vector2D spawn = Vector2D(kMaxHeight, 0);
+  std::array<std::array<bool, kMaxHeight>, kMaxWidth> map;
   int32_t grains_of_sand = 0;
 
   std::function<bool(const Vector2D&)> outOfScope;
@@ -30,6 +31,10 @@ std::unique_ptr<Cave> createCave(std::istream& in)
   char sep;
   std::string line;
 
+  for (auto& column : c->map) {
+    column.fill(false);
+  }
+
   while (getline(in, line)) {
     std::vector<Vector2D> segment;
     std::stringstream ss(line);
@@ -37,7 +42,7 @@ std::unique_ptr<Cave> createCave(std::istream& in)
     while (ss) {
       segment.emplace_back();
       ss >> segment.back().x >> sep >> segment.back().y;
-      ss >> sep >> sep;
+      ss.ignore(2);
       c->min.x = std::min(c->min.x, segment.back().x);
       c->min.y = std::min(c->min.y, segment.back().y);
       c->max.x = std::max(c->max.x, segment.back().x);
@@ -45,7 +50,7 @@ std::unique_ptr<Cave> createCave(std::istream& in)
     }
 
     for (auto it = segment.begin(); it != segment.end(); ++it) {
-      c->occupied.insert(*it);
+      c->map[(*it).x][(*it).y] = true;
       if (it + 1 != segment.end()) {
         Vector2D direction = *(it + 1) - *it;
         Vector2D unit_dir;
@@ -66,7 +71,7 @@ std::unique_ptr<Cave> createCave(std::istream& in)
 
         for (int32_t i = 1; i <= steps; ++i) {
           Vector2D current = (*it) + unit_dir * i;
-          c->occupied.insert(current);
+          c->map[current.x][current.y] = true;
         }
       }
     }
@@ -86,9 +91,10 @@ void flood(Cave& c)
     while (!at_rest && flooding) {
       at_rest = true;
       for (const auto& dir : directions) {
-        bool dir_empty = !c.occupied.contains(grain + dir);
-        bool out_of_scope = c.outOfScope(grain + dir);
-        bool on_floor = c.onFloor(grain + dir);
+        const Vector2D moved_grain = grain + dir;
+        const bool dir_empty = !c.map[moved_grain.x][moved_grain.y];
+        const bool out_of_scope = c.outOfScope(moved_grain);
+        const bool on_floor = c.onFloor(moved_grain);
 
         if (out_of_scope) {
           flooding = false;
@@ -104,7 +110,7 @@ void flood(Cave& c)
       }
 
       if (at_rest) {
-        c.occupied.insert(grain);
+        c.map[grain.x][grain.y] = true;
         c.grains_of_sand++;
         if (grain == c.spawn) {
           flooding = false;
@@ -119,7 +125,7 @@ void printOccupancy(const Cave& c)
 {
   for (int32_t y = c.min.y; y <= c.max.y; ++y) {
     for (int32_t x = c.min.x; x <= c.max.x; ++x) {
-      if (c.occupied.contains(Vector2D(x, y))) {
+      if (c.map[x][y]) {
         std::cout << "#";
       } else {
         std::cout << ".";
