@@ -1,18 +1,24 @@
 #include "solutions.h"
 
+#include "Device.h"
+
 namespace {
 
 inline Solution part1(std::ifstream& in)
 {
-  Solution s = std::to_string(0);
-  return s;
+  Device d;
+  d.file_system.parse(in);
+  const int32_t sum = d.file_system.sumSmallestFiles();
+  return std::to_string(sum);
 }
 
 inline Solution part2(std::ifstream& in)
 {
   
-  Solution s = std::to_string(0);
-  return s;
+  Device d;
+  d.file_system.parse(in);
+  const int32_t smallest = d.file_system.findSmallestForDeletion();
+  return std::to_string(smallest);
 }
 
 }  // namespace

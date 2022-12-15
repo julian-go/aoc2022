@@ -43,7 +43,7 @@ int main()
                          Problem{day04, {"584", "933"}},
                          Problem{day05, {"TWSGQHNHL", "JNRSCDWPP"}},
                          Problem{day06, {"1723", "3708"}},
-                         Problem{day07, {"x", "x"}},
+                         Problem{day07, {"2061777", "4473403"}},
                          Problem{day08, {"1543", "595080"}},
                          Problem{day09, {"5874", "2467"}},
                          Problem{day10, {"13920", "10069953020766180745"}},

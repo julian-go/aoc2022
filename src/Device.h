@@ -5,12 +5,15 @@
 #include <istream>
 #include <string>
 
+#include "FileSystem.h"
 #include "HeightMap.h"
 
 class Device {
  public:
   Device();
   virtual ~Device();
+
+  FileSystem file_system;
 
   // day 10
   void processCommandStream(std::istream& in);
