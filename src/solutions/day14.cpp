@@ -42,7 +42,7 @@ std::unique_ptr<Cave> createCave(std::istream& in)
     while (ss) {
       segment.emplace_back();
       ss >> segment.back().x >> sep >> segment.back().y;
-      ss.ignore(2);
+      ss.ignore(4);
       c->min.x = std::min(c->min.x, segment.back().x);
       c->min.y = std::min(c->min.y, segment.back().y);
       c->max.x = std::max(c->max.x, segment.back().x);
