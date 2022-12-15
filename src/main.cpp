@@ -1,8 +1,8 @@
 #include <chrono>
 #include <fstream>
 #include <functional>
-#include <limits>
 #include <iostream>
+#include <limits>
 #include <string>
 
 #include "solutions.h"
@@ -12,7 +12,7 @@ constexpr const char* table_div =
 constexpr const char* header_row =
     "| {:^10} | {:^22} | {:^4} | {:^10} | {:^10} | {:^10} | {:^10} |";
 constexpr const char* table_row =
-    "| {:<10} | {:<22} | {:^4} | {:>10.2f} | {:>10.2f} | {:>10} | {:>10} |";
+    "| {:<10} | {:<22} | {:^4} | {:>10.0f} | {:>10.0f} | {:>10} | {:>10} |";
 constexpr std::int32_t kNumRuns = 100;
 constexpr std::int8_t kNumParts = 2;
 constexpr bool kBenchmark = true;
