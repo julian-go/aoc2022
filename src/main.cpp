@@ -37,7 +37,6 @@ Benchmark benchmark(Problem p, std::ifstream& file, std::int8_t part);
 int main()
 {
   using std::cout;
-  auto t = table_div;
   std::array problems = {Problem{day01, {"71300", "209691"}},
                          Problem{day02, {"12772", "11618"}},
                          Problem{day03, {"8298", "2708"}},
@@ -46,12 +45,13 @@ int main()
                          Problem{day06, {"1723", "3708"}},
                          Problem{day07, {"x", "x"}},
                          Problem{day08, {"1543", "595080"}},
-                         Problem{day09, {"5874", "x"}},
+                         Problem{day09, {"5874", "2467"}},
                          Problem{day10, {"13920", "10069953020766180745"}},
                          Problem{day11, {"67830", "15305381442"}},
                          Problem{day12, {"456", "454"}},
                          Problem{day13, {"6101", "21909"}},
-                         Problem{day14, {"1001", "27976"}}};
+                         Problem{day14, {"1001", "27976"}},
+                         Problem{day15, {"4560025", "12480406634249"}}};
 
   cout << std::format(table_div, "") << std::endl;
   cout << std::format(header_row, "Problem", "Solution", "Fail", "E.T. Mean",

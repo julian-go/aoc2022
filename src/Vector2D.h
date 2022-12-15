@@ -9,6 +9,8 @@ struct Vector2D {
   constexpr Vector2D(std::int32_t x, std::int32_t y) : x(x), y(y){};
   constexpr virtual ~Vector2D() = default;
 
+  int32_t mlength() const { return std::abs(x) + std::abs(y); }
+
   Vector2D operator*(const int32_t& r) const { return Vector2D(x * r, y * r); }
 
   Vector2D operator+(const Vector2D& r) const
