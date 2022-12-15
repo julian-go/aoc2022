@@ -50,8 +50,6 @@ struct ListPacket : Packet {
   }
   virtual inline std::strong_ordering compare(const Packet& rhs) const
   {
-    // std::cout << "---- " << *this << std::endl;
-    // std::cout << "---- " << rhs << std::endl << std::endl;
     if (const ListPacket* rhs_list = dynamic_cast<const ListPacket*>(&rhs)) {
       auto lhs_it = data.begin();
       auto rhs_it = rhs_list->data.begin();
@@ -74,14 +72,9 @@ struct ListPacket : Packet {
         rhs_it++;
       }
     } else {
-      // std::cout << *this << std::endl;
-      // std::cout << rhs << std::endl;
       if (data.size() == 0) {
-        // std::cout << "true" << std::endl;
         return std::strong_ordering::less;
       } else if (data.size() > 1 && *data.front() == rhs) {
-        // std::cout << *data.front() << std::endl;
-        // std::cout << rhs << std::endl;
         return std::strong_ordering::greater;
       } else {
         return *data.front() <=> rhs;
@@ -101,32 +94,20 @@ struct ValuePacket : Packet {
   }
   virtual inline std::strong_ordering compare(const Packet& rhs) const
   {
-    // std::cout << "Value compare " << std::endl;
-    // std::cout << "---- " << *this << std::endl;
-    // std::cout << "---- " << rhs << std::endl << std::endl;
-
     if (const ValuePacket* rhs_value = dynamic_cast<const ValuePacket*>(&rhs)) {
-      // std::cout << ((data < rhs_value->data) ? "true" : "false") <<
-      // std::endl;
-      // std::cout << "to value " << std::endl;
       return data <=> rhs_value->data;
     } else if (const ListPacket* rhs_list =
                    dynamic_cast<const ListPacket*>(&rhs)) {
-      // std::cout << "to list " << std::endl;
       if (rhs_list->data.size() == 0) {
-        // rhs empty -> lhs is greater
         return std::strong_ordering::greater;
       } else {
         const auto& fval = *(rhs_list->data.front());
         if (rhs_list->data.size() == 1) {
-          // std::cout << "else\n";
           return *this <=> fval;
         } else {
           if (*this <= fval) {
-            // std::cout << "LESSER\n";
             return std::strong_ordering::less;
           } else {
-            // std::cout << "GREATER\n";
             return std::strong_ordering::greater;
           }
         }
@@ -175,14 +156,8 @@ inline Solution part1(std::ifstream& in)
   while (std::getline(in, signal1) && std::getline(in, signal2)) {
     std::unique_ptr<Packet> p1 = toPacket(signal1);
     std::unique_ptr<Packet> p2 = toPacket(signal2);
-    // std::cout << *p1 << std::endl;
-    // std::cout << *p2 << std::endl;
-    //   std::cout << (*p1 < *p2) << std::endl;
     if (*p1 < *p2) {
-      //std::cout << idx << " true" << std::endl;
       idx_sum += idx;
-    } else {
-      //std::cout << idx << " false" << std::endl;
     }
     std::getline(in, tmp);  // skip empty line
     idx++;
