@@ -24,5 +24,6 @@ Solution day13(std::ifstream& in, std::int8_t part);
 Solution day14(std::ifstream& in, std::int8_t part);
 Solution day15(std::ifstream& in, std::int8_t part);
 Solution day16(std::ifstream& in, std::int8_t part);
+Solution day17(std::ifstream& in, std::int8_t part);
 
 #endif // !SOLUTIONS_H_
