@@ -44,6 +44,9 @@ struct Cave {
 
   vector<Valve> valves;
   ValveTimeMap value_cache;
+
+  // array<vector<int16_t, unordered_map<int32_t, pair<bool, int32_t>>>, 30>
+  // cache;
 };
 
 void collapseGraph(vector<Valve>& valves)
@@ -93,12 +96,14 @@ void collapseGraph(vector<Valve>& valves)
         tmp.push_back(*it);
       }
       valve.neighbors = tmp;
-      // cout << "Valve " << valve.id << " has neighbors: ";
-      // for (auto it = valve.neighbors.begin(); it != valve.neighbors.end();
-      //      ++it) {
-      //   cout << it->id << "(" << it->dt_walk << "), ";
-      // }
-      // cout << endl;
+      if (valve.id == 9) {
+        cout << "Valve " << valve.id << " has neighbors: ";
+        for (auto it = valve.neighbors.begin(); it != valve.neighbors.end();
+             ++it) {
+          cout << it->id << "(" << it->dt_walk << "), ";
+        }
+        cout << endl;
+      }
     }
   }
 
@@ -204,9 +209,9 @@ unique_ptr<Cave> parse(ifstream& in)
   return c;
 }
 
-inline pair<bool, int32_t> remainingValue(Cave& c, const int16_t valve,
-                                          std::vector<bool> open,
-                                          int8_t time_remaining, int32_t indent)
+pair<bool, int32_t> remainingValue(Cave& c, const int16_t valve,
+                                   std::vector<bool> open,
+                                   int8_t time_remaining, int32_t indent)
 {
   Valve& v = c.valves.at(valve);
   std::vector<bool> open_old = open;
@@ -217,43 +222,52 @@ inline pair<bool, int32_t> remainingValue(Cave& c, const int16_t valve,
       hash |= (1ULL << i);
     }
   }
+  if (all_of(open.begin(), open.end(), [](bool b) { return b; })) {
+    // cout << "here" << endl;
+  }
   if (c.value_cache.contains(hash)) {
     return c.value_cache.at(hash);
   }
 
-  //for (int i = 0; i < indent; ++i) {
-  //  cout << "    ";
-  //}
-  //cout << valve << " -> " << static_cast<int16_t>(time_remaining) << std::endl;
+  // for (int i = 0; i < indent; ++i) {
+  //   cout << "    ";
+  // }
+  // cout << valve << " -> " << static_cast<int16_t>(time_remaining) <<
+  // std::endl;
 
   int32_t walk_value = 0;
   int32_t open_value = 0;
+  int32_t open2_value = 0;
 
   for (const Neighbor& n : v.neighbors) {
-    const bool can_open = time_remaining > dt_open && !open[v.id];
-    const bool can_walk = time_remaining > n.dt_walk + dt_open;
+    const bool can_open = (time_remaining > dt_open) && !open[v.id];
+    const bool can_walk = time_remaining > (n.dt_walk + dt_open);
     const bool can_open_and_walk =
-        time_remaining > n.dt_walk + 2 * dt_open && !open[v.id];
+        (time_remaining > (n.dt_walk + 2 * dt_open)) && !open[v.id];
 
     if (can_walk) {
       // there is still time to open another valve and benefit, otherwise no
       // value
+      // cout << static_cast<int>(time_remaining) << endl;
       walk_value = max(
           walk_value,
           remainingValue(c, n.id, open, time_remaining - n.dt_walk, indent + 1)
               .second);
+      // cout << static_cast<int>(time_remaining) << endl;
     }
 
     if (can_open_and_walk) {
       open[valve] = true;
-      open_value =
-          max(open_value,
-              remainingValue(c, n.id, open,
-                             time_remaining - n.dt_walk - dt_open, indent + 1)
-                  .second);
-      open_value += (time_remaining - dt_open) * v.flow_rate;
+      // cout << static_cast<int>(time_remaining) << endl;
+      int32_t tmp;
+      tmp = remainingValue(c, n.id, open, time_remaining - n.dt_walk - dt_open,
+                           indent + 1)
+                .second;
+      open[valve] = false; 
+      tmp += (time_remaining - dt_open) * v.flow_rate;
+      open_value = max(open_value, tmp);
     } else if (can_open) {
-      open_value += (time_remaining - dt_open) * v.flow_rate;
+      open_value = (time_remaining - dt_open) * v.flow_rate;
     }
   }
 
@@ -275,7 +289,7 @@ inline pair<bool, int32_t> remainingValue(Cave& c, const int16_t valve,
         hash |= (1ULL << i);
       }
     }
-    c.value_cache[hash] = make_pair(false, open_value);
+    c.value_cache[hash] = make_pair(false, walk_value);
     return make_pair(false, walk_value);
   }
   return make_pair(false, 0);
@@ -287,9 +301,19 @@ inline Solution part1(ifstream& in)
   int16_t current_valve = 0;
   int32_t total_pressure = 0;
   int32_t delta_pressure = 0;
-  int32_t time_remaining = 30;
+  int8_t time_remaining = 30;
   vector<bool> open_valves(c->valves.size(), false);
   open_valves[0] = true;
+
+  for (auto valve : c->valves) {
+    std::cout << format("ID: {}, Flow-Rate: {}", valve.id, valve.flow_rate)
+              << endl;
+    for (Neighbor neighbor : valve.neighbors) {
+      std::cout << format("Neighbor: {}, Distance: {}", neighbor.id,
+                          neighbor.dt_walk)
+                << endl;
+    }
+  }
 
   while (time_remaining > 0) {
     const Valve& v = c->valves.at(current_valve);
@@ -308,11 +332,10 @@ inline Solution part1(ifstream& in)
       }
     }
 
-
     {
       if (next_valve == -1) {
         total_pressure += delta_pressure;
-        time_remaining--;                               
+        time_remaining--;
         cout << std::format("T{}. Did not move. Released {} pressure.",
                             time_remaining + 1, delta_pressure)
              << std::endl;
@@ -325,7 +348,6 @@ inline Solution part1(ifstream& in)
              << std::endl;
       }
     }
-
 
     {
       if (open) {
@@ -344,8 +366,7 @@ inline Solution part1(ifstream& in)
     }
   }
 
-  // return to_string(total_pressure);
-  return "";
+  return to_string(total_pressure);
 }
 
 inline Solution part2(ifstream& in) { return to_string(0); }
