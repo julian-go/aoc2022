@@ -52,7 +52,16 @@ int main()
                          Problem{day13, {"6101", "21909"}},
                          Problem{day14, {"1001", "27976"}},
                          Problem{day15, {"4560025", "12480406634249"}},
-                         Problem{day16, {"0", "0"}}};
+                         Problem{day16, {"1850", "0"}},
+                         Problem{day17, {"3065", "1562536022966"}},
+                         Problem{day18, {"0", "0"}},
+                         Problem{day19, {"0", "0"}},
+                         Problem{day20, {"0", "0"}},
+                         Problem{day21, {"0", "0"}},
+                         Problem{day22, {"0", "0"}},
+                         Problem{day23, {"0", "0"}},
+                         Problem{day24, {"0", "0"}},
+                         Problem{day25, {"0", "0"}}};
 
   cout << std::format(table_div, "") << std::endl;
   cout << std::format(header_row, "Problem", "Solution", "Fail", "E.T. Mean",
