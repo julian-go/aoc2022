@@ -1,268 +1,206 @@
 
 #include <iostream>
+#include <queue>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
+#include "Matrix2D.h"
 #include "Tools.h"
 #include "Vector2D.h"
-#include "VectorMatrix2D.h"
 #include "solutions.h"
 
 namespace {
 
 using namespace std;
 
-enum class Direction { kNorth, kSouth, kEast, kWest };
-
-class Storm {
-  struct Blizzard {
-    Blizzard(Vector2D p, Vector2D dir)
-    {
-      position = p;
-      direction = dir;
-    }
-    Vector2D position;
-    Vector2D direction;
-  };
-
- public:
-  void solve()
+struct Blizzard {
+  Blizzard(Vector2D p, Vector2D dir)
   {
-    const array kMoves = {Vector2D(0, 0), Vector2D(1, 0), Vector2D(-1, 0),
-                          Vector2D(0, -1), Vector2D(0, 1)};
-    unordered_set<Vector2D, Vector2DHash> possible_positions;
-    possible_positions.insert(start_position_offset_);
-    int32_t time = 0;
-    while (true) {
-      time++;
-      moveBlizzards();
-      unordered_set<Vector2D, Vector2DHash> new_positions;
-      for (const auto& p : possible_positions) {
-        for (const auto& move : kMoves) {
-          const Vector2D next_position = p + move;
-          if (next_position == goal_position_) {
-            cout << "done at: " << time << endl;
-          }
-          if (next_position.y >= 0 && next_position.y < map_.sizeY() &&
-              !map_.at(next_position.x, next_position.y)) {
-            new_positions.insert(next_position);
-          }
-        }
+    position = p;
+    direction = dir;
+  }
+  Vector2D position;
+  Vector2D direction;
+};
+
+// forward declarations
+void parse(ifstream& in, Matrix2D<bool>& map, vector<Blizzard>& blizzards);
+int32_t solve(Matrix2D<bool>& map, vector<Blizzard>& blizzards,
+              queue<Vector2D>& waypoints);
+void moveElves(Matrix2D<bool>& map,
+               unordered_set<Vector2D, Vector2DHash>& positions,
+               unordered_set<Vector2D, Vector2DHash>& next_positions,
+               queue<Vector2D>& waypoints);
+void moveBlizzards(Matrix2D<bool>& map, vector<Blizzard>& blizzards);
+void clearBlizzards(Matrix2D<bool>& map);
+void print(Matrix2D<bool>& map);
+
+void parse(ifstream& in, Matrix2D<bool>& map, vector<Blizzard>& blizzards)
+{
+  const unordered_map<char, Vector2D> kDirs = {{'>', Vector2D(1, 0)},
+                                               {'<', Vector2D(-1, 0)},
+                                               {'^', Vector2D(0, -1)},
+                                               {'v', Vector2D(0, 1)}};
+
+  // Get size
+  string line;
+  int32_t size_x = 0, size_y = 0;
+  while (getline(in, line)) {
+    size_x = line.size();
+    size_y++;
+  }
+  in.clear();
+  in.seekg(0);
+
+  // Get blizzards
+  int32_t y = 0;
+  while (getline(in, line)) {
+    for (int32_t x = 0; x < line.size(); ++x) {
+      if (kDirs.contains(line[x])) {
+        blizzards.emplace_back(Vector2D(x, y), kDirs.at(line[x]));
       }
-      possible_positions = new_positions;
     }
+    ++y;
   }
 
-  void solve2()
-  {
-    const array kMoves = {Vector2D(0, 0), Vector2D(1, 0), Vector2D(-1, 0),
-                          Vector2D(0, -1), Vector2D(0, 1)};
-    unordered_set<Vector2D, Vector2DHash> possible_positions;
-    possible_positions.insert(start_position_offset_);
-    int32_t time = 0;
-    bool done = false;
-    while (!done) {
-      time++;
-      moveBlizzards();
-      unordered_set<Vector2D, Vector2DHash> new_positions;
-      for (const auto& p : possible_positions) {
-        for (const auto& move : kMoves) {
-          const Vector2D next_position = p + move;
-          if (next_position == goal_position_) {
-            done = true;
-            cout << "time: " << time << endl;
-            break;
-          }
-          if (next_position.y >= 0 && next_position.y < map_.sizeY() &&
-              !map_.at(next_position.x, next_position.y)) {
-            new_positions.insert(next_position);
-          }
-        }
-        if (done) {
-          break;
-        }
-      }
-      possible_positions = new_positions;
+  // Create map
+  map.resize(size_x, size_y);
+  map.fill(false);
+  for (int32_t x = 0; x < size_x; ++x) {
+    if (x != 1) {
+      // Entrance
+      map.set(x, 0, true);
     }
-
-    possible_positions.clear();
-    possible_positions.insert(goal_position_);
-    done = false;
-
-    while (!done) {
-      time++;
-      moveBlizzards();
-      unordered_set<Vector2D, Vector2DHash> new_positions;
-      for (const auto& p : possible_positions) {
-        for (const auto& move : kMoves) {
-          const Vector2D next_position = p + move;
-          if (next_position == start_position_offset_) {
-            done = true;
-            cout << "time: " << time << endl;
-            break;
-          }
-          if (next_position.y >= 0 && next_position.y < map_.sizeY() &&
-              !map_.at(next_position.x, next_position.y)) {
-            new_positions.insert(next_position);
-          }
-        }
-        if (done) {
-          break;
-        }
-      }
-      possible_positions = new_positions;
-    }
-
-    possible_positions.clear();
-    possible_positions.insert(start_position_offset_);
-    done = false;
-
-    while (!done) {
-      time++;
-      moveBlizzards();
-      unordered_set<Vector2D, Vector2DHash> new_positions;
-      for (const auto& p : possible_positions) {
-        for (const auto& move : kMoves) {
-          const Vector2D next_position = p + move;
-          if (next_position == goal_position_) {
-            done = true;
-            cout << "time: " << time << endl;
-            break;
-          }
-          if (next_position.y >= 0 && next_position.y < map_.sizeY() &&
-              !map_.at(next_position.x, next_position.y)) {
-            new_positions.insert(next_position);
-          }
-        }
-        if (done) {
-          break;
-        }
-      }
-      possible_positions = new_positions;
+    if (x != size_x - 2) {
+      // Exit
+      map.set(x, size_y - 1, true);
     }
   }
-
-  void parse(ifstream& in)
-  {
-    const unordered_map<char, Vector2D> kDirs = {{'>', Vector2D(1, 0)},
-                                                 {'<', Vector2D(-1, 0)},
-                                                 {'^', Vector2D(0, -1)},
-                                                 {'v', Vector2D(0, 1)}};
-
-    // Get size
-    string line;
-    int32_t size_x = 0, size_y = 0;
-    while (getline(in, line)) {
-      size_x = line.size();
-      size_y++;
-    }
-    goal_position_ = Vector2D(size_x - 1, size_y - 1) + goal_position_offset_;
-    in.clear();
-    in.seekg(0);
-
-    // Get blizzards
-    int32_t y = 0;
-    while (getline(in, line)) {
-      for (int32_t x = 0; x < line.size(); ++x) {
-        if (kDirs.contains(line[x])) {
-          blizzards_.emplace_back(Vector2D(x, y), kDirs.at(line[x]));
-        }
-      }
-      ++y;
-    }
-
-    // Create map
-    map_.resize(size_x, size_y);
-    map_.fill(false);
-    for (int32_t x = 0; x < size_x; ++x) {
-      if (x != 1) {
-        // Entrance
-        map_.set(x, 0, true);
-      }
-      if (x != size_x - 2) {
-        // Exit
-        map_.set(x, size_y - 1, true);
-      }
-    }
-    for (int32_t y = 0; y < size_y; ++y) {
-      map_.set(0, y, true);
-      map_.set(size_x - 1, y, true);
-    }
+  for (int32_t y = 0; y < size_y; ++y) {
+    map.set(0, y, true);
+    map.set(size_x - 1, y, true);
   }
+}
 
-  void clearBlizzards()
-  {
-    for (int32_t y = 1; y < map_.sizeY() - 1; ++y) {
-      for (int32_t x = 1; x < map_.sizeX() - 1; ++x) {
-        map_.set(x, y, false);
+int32_t solve(Matrix2D<bool>& map, vector<Blizzard>& blizzards,
+              queue<Vector2D>& waypoints)
+{
+  int32_t time = 0;
+  unordered_set<Vector2D, Vector2DHash> positions;
+  unordered_set<Vector2D, Vector2DHash> next_positions;
+
+  positions.insert(waypoints.front());
+  waypoints.pop();
+
+  while (!waypoints.empty()) {
+    time++;
+
+    moveBlizzards(map, blizzards);
+    moveElves(map, positions, next_positions, waypoints);
+  }
+  return time;
+}
+
+void moveElves(Matrix2D<bool>& map,
+               unordered_set<Vector2D, Vector2DHash>& positions,
+               unordered_set<Vector2D, Vector2DHash>& next_positions,
+               queue<Vector2D>& waypoints)
+{
+  constexpr array kMoves = {Vector2D(0, 0), Vector2D(1, 0), Vector2D(-1, 0),
+                            Vector2D(0, -1), Vector2D(0, 1)};
+  for (const auto& p : positions) {
+    for (const auto& move : kMoves) {
+      const Vector2D next_position = p + move;
+      if (next_position == waypoints.front()) {
+        positions.clear();
+        next_positions.clear();
+        positions.insert(waypoints.front());
+        waypoints.pop();
+        return;
+      } else if (next_position.y >= 0 && next_position.y < map.sizeY() &&
+                 !map.at(next_position.x, next_position.y)) {
+        next_positions.insert(next_position);
       }
     }
   }
+  positions = next_positions;
+  next_positions.clear();
+}
 
-  void moveBlizzards()
-  {
-    clearBlizzards();
-    for (auto& blizzard : blizzards_) {
-      blizzard.position += blizzard.direction;
-      if (blizzard.position.x < 1) {
-        blizzard.position.x = map_.sizeX() - 2;
-      } else if (blizzard.position.x >= map_.sizeX() - 1) {
-        blizzard.position.x = 1;
-      } else if (blizzard.position.y < 1) {
-        blizzard.position.y = map_.sizeY() - 2;
-      } else if (blizzard.position.y >= map_.sizeY() - 1) {
-        blizzard.position.y = 1;
-      }
-      map_.set(blizzard.position.x, blizzard.position.y, true);
+void moveBlizzards(Matrix2D<bool>& map, vector<Blizzard>& blizzards)
+{
+  clearBlizzards(map);
+  for (auto& blizzard : blizzards) {
+    blizzard.position += blizzard.direction;
+    if (blizzard.position.x < 1) {
+      blizzard.position.x = map.sizeX() - 2;
+    } else if (blizzard.position.x >= map.sizeX() - 1) {
+      blizzard.position.x = 1;
+    } else if (blizzard.position.y < 1) {
+      blizzard.position.y = map.sizeY() - 2;
+    } else if (blizzard.position.y >= map.sizeY() - 1) {
+      blizzard.position.y = 1;
+    }
+    map.set(blizzard.position.x, blizzard.position.y, true);
+  }
+}
+
+void clearBlizzards(Matrix2D<bool>& map)
+{
+  for (int32_t y = 1; y < map.sizeY() - 1; ++y) {
+    for (int32_t x = 1; x < map.sizeX() - 1; ++x) {
+      map.set(x, y, false);
     }
   }
+}
 
-  void print()
-  {
-    for (int32_t y = 0; y < map_.sizeY(); ++y) {
-      for (int32_t x = 0; x < map_.sizeX(); ++x) {
-        if (Vector2D(x, y) == start_position_offset_) {
-          cout << 'S';
-        } else if (Vector2D(x, y) == goal_position_) {
-          cout << 'E';
-        } else {
-          cout << (map_.at(x, y) ? '#' : '.');
-        }
-      }
-      cout << endl;
+void print(Matrix2D<bool>& map)
+{
+  for (int32_t y = 0; y < map.sizeY(); ++y) {
+    for (int32_t x = 0; x < map.sizeX(); ++x) {
+      cout << (map.at(x, y) ? '#' : '.');
     }
     cout << endl;
   }
-
- private:
-  static constexpr Vector2D start_position_offset_ = Vector2D(1, 0);
-  static constexpr Vector2D goal_position_offset_ = Vector2D(-1, 0);
-  Vector2D goal_position_;
-
-  vector<Blizzard> blizzards_;
-  VectorMatrix2D<bool> map_;
-};
+  cout << endl;
+}
 
 inline Solution part1(std::ifstream& in)
 {
-  Storm s;
-  s.parse(in);
-  s.print();
-  s.solve2();
-  // s.moveBlizzards();
-  // s.print();
-  // s.moveBlizzards();
-  // s.print();
-  // s.moveBlizzards();
-  // s.print();
-  // s.moveBlizzards();
-  return "";
+  Matrix2D<bool> map;          // occupancy map;
+  vector<Blizzard> blizzards;  // location and direction of blizzards
+
+  parse(in, map, blizzards);
+
+  queue<Vector2D> waypoints;
+  waypoints.emplace(1, 0);
+  waypoints.emplace(map.sizeX() - 2, map.sizeY() - 1);
+
+  int32_t solution = solve(map, blizzards, waypoints);
+
+  return to_string(solution);
 }
 
-inline Solution part2(std::ifstream& in) { return std::to_string(0); }
+inline Solution part2(std::ifstream& in)
+{
+  Matrix2D<bool> map;          // occupancy map;
+  vector<Blizzard> blizzards;  // location and direction of blizzards
+
+  parse(in, map, blizzards);
+
+  queue<Vector2D> waypoints;
+  waypoints.emplace(1, 0);
+  waypoints.emplace(map.sizeX() - 2, map.sizeY() - 1);
+  waypoints.emplace(1, 0);
+  waypoints.emplace(map.sizeX() - 2, map.sizeY() - 1);
+
+  int32_t solution = solve(map, blizzards, waypoints);
+
+  return to_string(solution);
+}
 
 }  // namespace
 
