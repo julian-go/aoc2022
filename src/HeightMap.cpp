@@ -79,7 +79,7 @@ int32_t HeightMap::costShortestHike() const
 
 void HeightMap::computeCost()
 {
-  constexpr std::array<Vector2D, 4> relative_neighbors = {
+  constexpr std::array<Vec2D, 4> relative_neighbors = {
       Vector2D(-1, 0),
       Vector2D(1, 0),
       Vector2D(0, -1),
@@ -90,11 +90,11 @@ void HeightMap::computeCost()
       size_.y, std::vector<int32_t>(size_.x, -1));
 
   cost_map_[end_.y][end_.x] = 0;
-  std::stack<Vector2D> to_check;
+  std::stack<Vec2D> to_check;
   to_check.push(end_);
 
   while (!to_check.empty()) {
-    const Vector2D current = to_check.top();
+    const Vec2D current = to_check.top();
     const int32_t current_cost = cost(current);
     to_check.pop();
 
@@ -112,21 +112,21 @@ void HeightMap::computeCost()
   }
 }
 
-int32_t HeightMap::height(const Vector2D& c) const { return map_[c.y][c.x]; }
+int32_t HeightMap::height(const Vec2D& c) const { return map_[c.y][c.x]; }
 
 int32_t HeightMap::height(const int32_t& x, const int32_t& y) const
 {
   return map_[y][x];
 }
 
-int32_t HeightMap::cost(const Vector2D& c) const { return cost_map_[c.y][c.x]; }
+int32_t HeightMap::cost(const Vec2D& c) const { return cost_map_[c.y][c.x]; }
 
 int32_t HeightMap::cost(const int32_t& x, const int32_t& y) const
 {
   return cost_map_[y][x];
 }
 
-bool HeightMap::valid(const Vector2D& c) const
+bool HeightMap::valid(const Vec2D& c) const
 {
   return c.x >= 0 && c.x < size_.x && c.y >= 0 && c.y < size_.y;
 }

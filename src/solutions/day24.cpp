@@ -15,35 +15,36 @@
 namespace {
 
 using namespace std;
+using Vec2D = Vector2D<int32_t>;
 
 struct Blizzard {
-  Blizzard(Vector2D p, Vector2D dir)
+  Blizzard(Vec2D p, Vec2D dir)
   {
     position = p;
     direction = dir;
   }
-  Vector2D position;
-  Vector2D direction;
+  Vec2D position;
+  Vec2D direction;
 };
 
 // forward declarations
 void parse(ifstream& in, Matrix2D<bool>& map, vector<Blizzard>& blizzards);
 int32_t solve(Matrix2D<bool>& map, vector<Blizzard>& blizzards,
-              queue<Vector2D>& waypoints);
+              queue<Vec2D>& waypoints);
 void moveElves(Matrix2D<bool>& map,
-               unordered_set<Vector2D, Vector2DHash>& positions,
-               unordered_set<Vector2D, Vector2DHash>& next_positions,
-               queue<Vector2D>& waypoints);
+               unordered_set<Vec2D, Vec2D::Hash>& positions,
+               unordered_set<Vec2D, Vec2D::Hash>& next_positions,
+               queue<Vec2D>& waypoints);
 void moveBlizzards(Matrix2D<bool>& map, vector<Blizzard>& blizzards);
 void clearBlizzards(Matrix2D<bool>& map);
 void print(Matrix2D<bool>& map);
 
 void parse(ifstream& in, Matrix2D<bool>& map, vector<Blizzard>& blizzards)
 {
-  const unordered_map<char, Vector2D> kDirs = {{'>', Vector2D(1, 0)},
-                                               {'<', Vector2D(-1, 0)},
-                                               {'^', Vector2D(0, -1)},
-                                               {'v', Vector2D(0, 1)}};
+  const unordered_map<char, Vec2D> kDirs = {{'>', Vec2D(1, 0)},
+                                             {'<', Vec2D(-1, 0)},
+                                             {'^', Vec2D(0, -1)},
+                                             {'v', Vec2D(0, 1)}};
 
   // Get size
   string line;
@@ -60,7 +61,7 @@ void parse(ifstream& in, Matrix2D<bool>& map, vector<Blizzard>& blizzards)
   while (getline(in, line)) {
     for (int32_t x = 0; x < line.size(); ++x) {
       if (kDirs.contains(line[x])) {
-        blizzards.emplace_back(Vector2D(x, y), kDirs.at(line[x]));
+        blizzards.emplace_back(Vec2D(x, y), kDirs.at(line[x]));
       }
     }
     ++y;
@@ -86,11 +87,11 @@ void parse(ifstream& in, Matrix2D<bool>& map, vector<Blizzard>& blizzards)
 }
 
 int32_t solve(Matrix2D<bool>& map, vector<Blizzard>& blizzards,
-              queue<Vector2D>& waypoints)
+              queue<Vec2D>& waypoints)
 {
   int32_t time = 0;
-  unordered_set<Vector2D, Vector2DHash> positions;
-  unordered_set<Vector2D, Vector2DHash> next_positions;
+  unordered_set<Vec2D, Vec2D::Hash> positions;
+  unordered_set<Vec2D, Vec2D::Hash> next_positions;
 
   positions.insert(waypoints.front());
   waypoints.pop();
@@ -105,15 +106,15 @@ int32_t solve(Matrix2D<bool>& map, vector<Blizzard>& blizzards,
 }
 
 void moveElves(Matrix2D<bool>& map,
-               unordered_set<Vector2D, Vector2DHash>& positions,
-               unordered_set<Vector2D, Vector2DHash>& next_positions,
-               queue<Vector2D>& waypoints)
+               unordered_set<Vec2D, Vec2D::Hash>& positions,
+               unordered_set<Vec2D, Vec2D::Hash>& next_positions,
+               queue<Vec2D>& waypoints)
 {
-  constexpr array kMoves = {Vector2D(0, 0), Vector2D(1, 0), Vector2D(-1, 0),
-                            Vector2D(0, -1), Vector2D(0, 1)};
+  constexpr array kMoves = {Vec2D(0, 0), Vec2D(1, 0), Vec2D(-1, 0),
+                            Vec2D(0, -1), Vec2D(0, 1)};
   for (const auto& p : positions) {
     for (const auto& move : kMoves) {
-      const Vector2D next_position = p + move;
+      const Vec2D next_position = p + move;
       if (next_position == waypoints.front()) {
         positions.clear();
         next_positions.clear();
@@ -175,7 +176,7 @@ inline Solution part1(std::ifstream& in)
 
   parse(in, map, blizzards);
 
-  queue<Vector2D> waypoints;
+  queue<Vec2D> waypoints;
   waypoints.emplace(1, 0);
   waypoints.emplace(map.sizeX() - 2, map.sizeY() - 1);
 
@@ -191,7 +192,7 @@ inline Solution part2(std::ifstream& in)
 
   parse(in, map, blizzards);
 
-  queue<Vector2D> waypoints;
+  queue<Vec2D> waypoints;
   waypoints.emplace(1, 0);
   waypoints.emplace(map.sizeX() - 2, map.sizeY() - 1);
   waypoints.emplace(1, 0);

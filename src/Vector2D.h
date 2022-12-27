@@ -1,12 +1,19 @@
 #ifndef VECTOR_2D_
 #define VECTOR_2D_
 
-#include <cstdint>
 #include <iostream>
 
+template<typename TType = int32_t>
 struct Vector2D {
+  struct Hash {
+    size_t operator()(const Vector2D& v) const
+    {
+      return (v.x << 16) | (v.y & 0xFFFF);
+    }
+  };
+
   constexpr Vector2D() : x(0), y(0){};
-  constexpr Vector2D(std::int32_t x, std::int32_t y) : x(x), y(y){};
+  constexpr Vector2D(TType x, TType y) : x(x), y(y){};
   constexpr virtual ~Vector2D() = default;
 
   int32_t mlength() const { return std::abs(x) + std::abs(y); }
@@ -52,15 +59,10 @@ struct Vector2D {
     return out;
   }
 
-  std::int32_t x;
-  std::int32_t y;
+  TType x;
+  TType y;
 };
 
-struct Vector2DHash {
-  size_t operator()(const Vector2D& v) const
-  {
-    return (v.x << 16) | (v.y & 0xFFFF);
-  }
-};
+
 
 #endif  // !VECTOR_2D_

@@ -13,12 +13,13 @@
 namespace {
 
 using namespace std;
+using Vec2D = Vector2D<int32_t>;
 
 template <typename TType>
 using Matrix = Matrix2D<TType>;
 
 void parse(ifstream& in, Matrix2D<uint8_t>& elves,
-           vector<Vector2D>& elf_positions, int32_t num_rounds)
+           vector<Vec2D>& elf_positions, int32_t num_rounds)
 {
   string line;
   int32_t size_x = 0;
@@ -65,18 +66,18 @@ void print(const Matrix2D<uint8_t>& elves)
 inline Solution part1(std::ifstream& in)
 {
   constexpr int32_t kRounds = 10;
-  constexpr array kDirs = {Vector2D(0, -1), Vector2D(0, 1), Vector2D(-1, 0),
-                           Vector2D(1, 0)};
-  constexpr array<array<Vector2D, 3>, 4> kCheckDirs = {
-      array{Vector2D(0, -1), Vector2D(1, -1), Vector2D(-1, -1)},
-      array{Vector2D(0, 1), Vector2D(1, 1), Vector2D(-1, 1)},
-      array{Vector2D(-1, 0), Vector2D(-1, 1), Vector2D(-1, -1)},
-      array{Vector2D(1, 0), Vector2D(1, 1), Vector2D(1, -1)}};
+  constexpr array kDirs = {Vec2D(0, -1), Vec2D(0, 1), Vec2D(-1, 0),
+                           Vec2D(1, 0)};
+  constexpr array<array<Vec2D, 3>, 4> kCheckDirs = {
+      array{Vec2D(0, -1), Vec2D(1, -1), Vec2D(-1, -1)},
+      array{Vec2D(0, 1), Vec2D(1, 1), Vec2D(-1, 1)},
+      array{Vec2D(-1, 0), Vec2D(-1, 1), Vec2D(-1, -1)},
+      array{Vec2D(1, 0), Vec2D(1, 1), Vec2D(1, -1)}};
 
   int32_t first_direction = 0;
   Matrix2D<uint8_t> elves;
-  vector<Vector2D> elf_positions;
-  unordered_map<Vector2D, vector<int32_t>, Vector2DHash> next_move;
+  vector<Vec2D> elf_positions;
+  unordered_map<Vec2D, vector<int32_t>, Vec2D::Hash> next_move;
   parse(in, elves, elf_positions, kRounds);
   // print(elves);
 
@@ -85,11 +86,11 @@ inline Solution part1(std::ifstream& in)
 
     // First half
     for (int32_t elf_i = 0; elf_i < elf_positions.size(); ++elf_i) {
-      const Vector2D current_position = elf_positions[elf_i];
+      const Vec2D current_position = elf_positions[elf_i];
       bool all_clear = true;
       for (int32_t dir = 0; dir < 4; ++dir) {
         for (int32_t check_dir = 0; check_dir < 3; ++check_dir) {
-          const Vector2D to_check =
+          const Vec2D to_check =
               current_position + kCheckDirs[dir][check_dir];
           if (elves.at(to_check.x, to_check.y)) {
             all_clear = false;
@@ -103,9 +104,9 @@ inline Solution part1(std::ifstream& in)
 
       for (int32_t dir = 0; dir < 4; ++dir) {
         bool clear = true;
-        const Vector2D next_move_vector = kDirs[(dir + first_direction) % 4];
+        const Vec2D next_move_vector = kDirs[(dir + first_direction) % 4];
         for (int32_t check_dir = 0; check_dir < 3; ++check_dir) {
-          const Vector2D to_check =
+          const Vec2D to_check =
               current_position +
               kCheckDirs[(dir + first_direction) % 4][check_dir];
           if (elves.at(to_check.x, to_check.y)) {
@@ -127,7 +128,7 @@ inline Solution part1(std::ifstream& in)
     // Second half
     for (const auto& move : next_move) {
       if (move.second.size() == 1) {
-        Vector2D& current_position = elf_positions[move.second.front()];
+        Vec2D& current_position = elf_positions[move.second.front()];
         elves.at(current_position.x, current_position.y) = false;
         current_position = move.first;
         elves.at(current_position.x, current_position.y) = true;
@@ -161,18 +162,18 @@ inline Solution part1(std::ifstream& in)
 
 inline Solution part2(std::ifstream& in)
 {
-  constexpr array kDirs = {Vector2D(0, -1), Vector2D(0, 1), Vector2D(-1, 0),
-                           Vector2D(1, 0)};
-  constexpr array<array<Vector2D, 3>, 4> kCheckDirs = {
-      array{Vector2D(0, -1), Vector2D(1, -1), Vector2D(-1, -1)},
-      array{Vector2D(0, 1), Vector2D(1, 1), Vector2D(-1, 1)},
-      array{Vector2D(-1, 0), Vector2D(-1, 1), Vector2D(-1, -1)},
-      array{Vector2D(1, 0), Vector2D(1, 1), Vector2D(1, -1)}};
+  constexpr array kDirs = {Vec2D(0, -1), Vec2D(0, 1), Vec2D(-1, 0),
+                           Vec2D(1, 0)};
+  constexpr array<array<Vec2D, 3>, 4> kCheckDirs = {
+      array{Vec2D(0, -1), Vec2D(1, -1), Vec2D(-1, -1)},
+      array{Vec2D(0, 1), Vec2D(1, 1), Vec2D(-1, 1)},
+      array{Vec2D(-1, 0), Vec2D(-1, 1), Vec2D(-1, -1)},
+      array{Vec2D(1, 0), Vec2D(1, 1), Vec2D(1, -1)}};
 
   int32_t first_direction = 0;
   Matrix2D<uint8_t> elves;
-  vector<Vector2D> elf_positions;
-  unordered_map<Vector2D, vector<int32_t>, Vector2DHash> next_move;
+  vector<Vec2D> elf_positions;
+  unordered_map<Vec2D, vector<int32_t>, Vec2D::Hash> next_move;
   parse(in, elves, elf_positions, 150);
   // print(elves);
 
@@ -185,11 +186,11 @@ inline Solution part2(std::ifstream& in)
 
     // First half
     for (int32_t elf_i = 0; elf_i < elf_positions.size(); ++elf_i) {
-      const Vector2D current_position = elf_positions[elf_i];
+      const Vec2D current_position = elf_positions[elf_i];
       bool all_clear = true;
       for (int32_t dir = 0; dir < 4; ++dir) {
         for (int32_t check_dir = 0; check_dir < 3; ++check_dir) {
-          const Vector2D to_check =
+          const Vec2D to_check =
               current_position + kCheckDirs[dir][check_dir];
           if (elves.at(to_check.x, to_check.y)) {
             all_clear = false;
@@ -205,9 +206,9 @@ inline Solution part2(std::ifstream& in)
 
       for (int32_t dir = 0; dir < 4; ++dir) {
         bool clear = true;
-        const Vector2D next_move_vector = kDirs[(dir + first_direction) % 4];
+        const Vec2D next_move_vector = kDirs[(dir + first_direction) % 4];
         for (int32_t check_dir = 0; check_dir < 3; ++check_dir) {
-          const Vector2D to_check =
+          const Vec2D to_check =
               current_position +
               kCheckDirs[(dir + first_direction) % 4][check_dir];
           if (elves.at(to_check.x, to_check.y)) {
@@ -229,7 +230,7 @@ inline Solution part2(std::ifstream& in)
     // Second half
     for (const auto& move : next_move) {
       if (move.second.size() == 1) {
-        Vector2D& current_position = elf_positions[move.second.front()];
+        Vec2D& current_position = elf_positions[move.second.front()];
         elves.at(current_position.x, current_position.y) = false;
         current_position = move.first;
         elves.at(current_position.x, current_position.y) = true;

@@ -7,6 +7,8 @@
 #include "Vector2D.h"
 
 class HeightMap {
+using Vec2D = Vector2D<int32_t>;
+
  public:
   HeightMap() = default;
   virtual ~HeightMap() = default;
@@ -21,17 +23,17 @@ class HeightMap {
 
  private:
   void computeCost();
-  int32_t height(const Vector2D& c) const;
+  int32_t height(const Vec2D& c) const;
   int32_t height(const int32_t& x, const int32_t& y) const;
-  int32_t cost(const Vector2D& c) const;
+  int32_t cost(const Vec2D& c) const;
   int32_t cost(const int32_t& x, const int32_t& y) const;
-  bool valid(const Vector2D& c) const;
+  bool valid(const Vec2D& c) const;
 
   std::vector<std::vector<int32_t>> map_;
   std::vector<std::vector<int32_t>> cost_map_;
-  Vector2D size_;
-  Vector2D start_;
-  Vector2D end_;
+  Vec2D size_;
+  Vec2D start_;
+  Vec2D end_;
 };
 
 #endif  // !HEIGHT_MAP_

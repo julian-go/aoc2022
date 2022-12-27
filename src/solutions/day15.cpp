@@ -11,10 +11,12 @@
 
 namespace {
 
+using Vec2D = Vector2D<int32_t>;
+
 static constexpr int32_t kMaxCoord = 4'000'000;
 
 struct Sensor {
-  Vector2D position;
+  Vec2D position;
   int32_t reach;
 };
 
@@ -83,12 +85,12 @@ void collapse(std::vector<Range>& v)
 }
 
 inline void parse(std::ifstream& in, std::vector<Sensor>& sensors,
-                  std::unordered_set<Vector2D, Vector2DHash>& beacons)
+                  std::unordered_set<Vec2D, Vec2D::Hash>& beacons)
 {
   std::string line;
   while (std::getline(in, line)) {
     std::stringstream ss(line);
-    Vector2D beacon;
+    Vec2D beacon;
     sensors.emplace_back();
     ss.ignore(12);
     ss >> sensors.back().position.x;
@@ -100,7 +102,7 @@ inline void parse(std::ifstream& in, std::vector<Sensor>& sensors,
     ss >> beacon.y;
     beacons.insert(beacon);
 
-    Vector2D distance = sensors.back().position - beacon;
+    Vec2D distance = sensors.back().position - beacon;
     sensors.back().reach = distance.mlength();
   }
 }
@@ -111,7 +113,7 @@ inline Solution part1(std::ifstream& in)
 
   int32_t occupied = 0;
   std::vector<Sensor> sensors;
-  std::unordered_set<Vector2D, Vector2DHash> beacons;
+  std::unordered_set<Vec2D, Vec2D::Hash> beacons;
   std::vector<Range> ranges;
   parse(in, sensors, beacons);
 
@@ -141,7 +143,7 @@ inline Solution part2(std::ifstream& in)
 {
   int64_t frequency = -1;
   std::vector<Sensor> sensors;
-  std::unordered_set<Vector2D, Vector2DHash> beacons;
+  std::unordered_set<Vec2D, Vec2D::Hash> beacons;
   std::vector<Range> ranges;
   parse(in, sensors, beacons);
 

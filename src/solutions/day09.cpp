@@ -7,12 +7,14 @@
 
 namespace {
 
+using Vec2D = Vector2D<int32_t>;
+
 class RopeSegment {
  public:
   RopeSegment() = default;
   ~RopeSegment() { delete next_; };
 
-  void move(const Vector2D& v)
+  void move(const Vec2D& v)
   {
     position_ += v;
     next_->follow(*this);
@@ -21,8 +23,8 @@ class RopeSegment {
   void follow(const RopeSegment& rs)
   {
     bool should_move = false;
-    const Vector2D distance = rs.getPosition() - position_;
-    Vector2D move;
+    const Vec2D distance = rs.getPosition() - position_;
+    Vec2D move;
     if (std::abs(distance.x) > 1) {
       move.x += distance.x / std::abs(distance.x);
       if (std::abs(distance.y) > 0) {
@@ -46,11 +48,11 @@ class RopeSegment {
   }
 
   void setNext(RopeSegment* next) { next_ = next; }
-  const Vector2D& getPosition() const { return position_; }
+  const Vec2D& getPosition() const { return position_; }
 
  private:
   RopeSegment* next_ = nullptr;
-  Vector2D position_;
+  Vec2D position_;
 };
 
 template <int32_t kNumSegments>
@@ -66,7 +68,7 @@ inline Solution solve(std::ifstream& in)
 
   char c;
   int32_t steps;
-  std::unordered_set<Vector2D, Vector2DHash> visited;
+  std::unordered_set<Vec2D, Vec2D::Hash> visited;
   while (in >> c >> steps) {
     while (steps > 0) {
       switch (c) {
