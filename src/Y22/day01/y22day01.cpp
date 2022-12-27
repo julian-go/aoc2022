@@ -25,6 +25,10 @@ inline string part1(ifstream& in)
     }
   }
 
+  auto min_calories =
+      std::min_element(max_calories.begin(), max_calories.end());
+  *min_calories = std::max(*min_calories, calories);
+
   return std::to_string(
       *std::max_element(max_calories.begin(), max_calories.end()));
 }
@@ -45,6 +49,10 @@ inline string part2(ifstream& in)
       calories += std::stoi(line);
     }
   }
+
+  auto min_calories =
+      std::min_element(max_calories.begin(), max_calories.end());
+  *min_calories = std::max(*min_calories, calories);
 
   return std::to_string(
       std::accumulate(max_calories.begin(), max_calories.end(), 0));

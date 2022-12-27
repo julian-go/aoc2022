@@ -1,4 +1,3 @@
-#include "y22.h"
 #include <algorithm>
 #include <array>
 #include <iostream>
@@ -8,12 +7,13 @@
 #include <vector>
 
 #include "utils/Vector2D.h"
+#include "y22.h"
 
 namespace {
 
 using Vec2D = Vector2D<int32_t>;
 
-static constexpr int32_t kMaxCoord = 4'000'000;
+static int32_t kMaxCoord = 4'000'000;
 
 struct Sensor {
   Vec2D position;
@@ -109,13 +109,17 @@ inline void parse(std::ifstream& in, std::vector<Sensor>& sensors,
 
 inline std::string part1(std::ifstream& in)
 {
-  constexpr int32_t kRow = 2'000'000;
+  int32_t kRow = 2'000'000;
 
   int32_t occupied = 0;
   std::vector<Sensor> sensors;
   std::unordered_set<Vec2D, Vec2D::Hash> beacons;
   std::vector<Range> ranges;
   parse(in, sensors, beacons);
+
+  if (sensors.size() < 20) {
+    kRow = 10;  // example case
+  }
 
   for (const auto& sensor : sensors) {
     if (auto range = coveredRange<false>(sensor, kRow)) {
@@ -141,11 +145,16 @@ inline std::string part1(std::ifstream& in)
 
 inline std::string part2(std::ifstream& in)
 {
+  kMaxCoord = 4'000'000;
   int64_t frequency = -1;
   std::vector<Sensor> sensors;
   std::unordered_set<Vec2D, Vec2D::Hash> beacons;
   std::vector<Range> ranges;
   parse(in, sensors, beacons);
+
+  if (sensors.size() < 20) {
+    kMaxCoord = 20;  // example case
+  }
 
   for (int32_t i = 0; i <= kMaxCoord && frequency == -1; ++i) {
     for (const auto& sensor : sensors) {
@@ -161,13 +170,13 @@ inline std::string part2(std::ifstream& in)
         frequency = i;
       } else if (ranges[0].max < kMaxCoord) {
         frequency =
-            static_cast<int64_t>(kMaxCoord) * static_cast<int64_t>(kMaxCoord);
+            static_cast<int64_t>(4'000'000) * static_cast<int64_t>(4'000'000);
         frequency += i;
       }
     } else if (ranges.size() == 2) {
       frequency =
           static_cast<int64_t>(std::min(ranges[0].max, ranges[1].max)) + 1;
-      frequency *= kMaxCoord;
+      frequency *= 4'000'000;
       frequency += i;
     } else {
       std::cerr << "Something went wrong..." << std::endl;
