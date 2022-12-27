@@ -1,37 +1,25 @@
-#ifndef SOLUTIONS_H_
-#define SOLUTIONS_H_
-
 #include <array>
 #include <fstream>
+#include <functional>
 #include <string>
-#include <variant>
 
-using Solution = std::string;
+constexpr std::int8_t kNumParts = 2;
+using Solve = std::function<std::string(std::ifstream&, std::int8_t part)>;
 
-Solution day01(std::ifstream& in, std::int8_t part);
-Solution day02(std::ifstream& in, std::int8_t part);
-Solution day03(std::ifstream& in, std::int8_t part);
-Solution day04(std::ifstream& in, std::int8_t part);
-Solution day05(std::ifstream& in, std::int8_t part);
-Solution day06(std::ifstream& in, std::int8_t part);
-Solution day07(std::ifstream& in, std::int8_t part);
-Solution day08(std::ifstream& in, std::int8_t part);
-Solution day09(std::ifstream& in, std::int8_t part);
-Solution day10(std::ifstream& in, std::int8_t part);
-Solution day11(std::ifstream& in, std::int8_t part);
-Solution day12(std::ifstream& in, std::int8_t part);
-Solution day13(std::ifstream& in, std::int8_t part);
-Solution day14(std::ifstream& in, std::int8_t part);
-Solution day15(std::ifstream& in, std::int8_t part);
-Solution day16(std::ifstream& in, std::int8_t part);
-Solution day17(std::ifstream& in, std::int8_t part);
-Solution day18(std::ifstream& in, std::int8_t part);
-Solution day19(std::ifstream& in, std::int8_t part);
-Solution day20(std::ifstream& in, std::int8_t part);
-Solution day21(std::ifstream& in, std::int8_t part);
-Solution day22(std::ifstream& in, std::int8_t part);
-Solution day23(std::ifstream& in, std::int8_t part);
-Solution day24(std::ifstream& in, std::int8_t part);
-Solution day25(std::ifstream& in, std::int8_t part);
+struct Problem {
+  bool run;
+  Solve solve;
+  std::array<std::string, kNumParts> sample_expected;
+  std::array<std::string, kNumParts> expected;
+};
 
-#endif  // !SOLUTIONS_H_
+struct Year {
+  bool run;
+  std::string str;
+  std::string folder;
+  std::array<Problem, 25> problems;
+};
+
+using Problems = std::array<Year, 1>;
+
+const Problems& getProblems();

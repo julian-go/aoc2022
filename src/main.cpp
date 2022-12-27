@@ -1,3 +1,4 @@
+#include <array>
 #include <chrono>
 #include <fstream>
 #include <functional>
@@ -7,22 +8,9 @@
 
 #include "solutions.h"
 
-constexpr const char* table_div =
-    "+{0:->12}+{0:->24}+{0:->6}+{0:->12}+{0:->12}+{0:->12}+{0:->12}+";
-constexpr const char* header_row =
-    "| {:^10} | {:^22} | {:^4} | {:^10} | {:^10} | {:^10} | {:^10} |";
-constexpr const char* table_row =
-    "| {:<10} | {:<22} | {:^4} | {:>10.0f} | {:>10.0f} | {:>10} | {:>10} |";
-constexpr std::int32_t kNumRuns = 100;
-constexpr std::int8_t kNumParts = 2;
-constexpr bool kBenchmark = true;
-
-using Solve = std::function<Solution(std::ifstream&, std::int8_t part)>;
-
-struct Problem {
-  Solve solve;
-  std::array<Solution, kNumParts> expected;
-};
+constexpr std::int32_t kNumRuns = 1000;
+constexpr bool kBenchmark = false;
+constexpr bool kTestInputOnly = false;
 
 struct Benchmark {
   double mean = 0;
@@ -31,81 +19,76 @@ struct Benchmark {
   double standard_deviation = 0;
 };
 
-void solve(Problem p, std::int32_t day);
+struct Run {
+  std::string input_path;
+  Problem problem;
+  Benchmark benchmark;
+  std::string solution;
+};
+
+void solve(Run& r, int32_t part);
 Benchmark benchmark(Problem p, std::ifstream& file, std::int8_t part);
+void printDivider();
+void printHeader(Year y);
+void printRun(std::string label, Run r, bool pass);
+void printFooter();
 
 int main()
 {
-  using std::cout;
-  std::array problems = {Problem{day01, {"71300", "209691"}},
-                         Problem{day02, {"12772", "11618"}},
-                         Problem{day03, {"8298", "2708"}},
-                         Problem{day04, {"584", "933"}},
-                         Problem{day05, {"TWSGQHNHL", "JNRSCDWPP"}},
-                         Problem{day06, {"1723", "3708"}},
-                         Problem{day07, {"2061777", "4473403"}},
-                         Problem{day08, {"1543", "595080"}},
-                         Problem{day09, {"5874", "2467"}},
-                         Problem{day10, {"13920", "10069953020766180745"}},
-                         Problem{day11, {"67830", "15305381442"}},
-                         Problem{day12, {"456", "454"}},
-                         Problem{day13, {"6101", "21909"}},
-                         Problem{day14, {"1001", "27976"}},
-                         Problem{day15, {"4560025", "12480406634249"}},
-                         Problem{day16, {"1850", "0"}},
-                         Problem{day17, {"3065", "1562536022966"}},
-                         Problem{day18, {"4460", "2498"}},
-                         Problem{day19, {"1719", "19530"}},
-                         Problem{day20, {"7395", "0"}},
-                         Problem{day21, {"24947355373338", "3876907167495"}},
-                         Problem{day22, {"117102", "0"}},
-                         Problem{day23, {"4000", "1040"}},
-                         Problem{day24, {"257", "828"}},
-                         Problem{day25, {"2=001=-2=--0212-22-2", "N/A"}}};
+  const Problems& problems = getProblems();
 
-  cout << std::format(table_div, "") << std::endl;
-  cout << std::format(header_row, "Problem", "Solution", "Fail", "E.T. Mean",
-                      "E.T. STD", "E.T. Min", "E.T. Max")
-       << std::endl;
-  cout << std::format(table_div, "", "", "", "", "", "", "") << std::endl;
+  for (const Year& year : problems) {
+    if (!year.run) continue;
+    printHeader(year);
+    Run run;
+    for (size_t i = 0; i < year.problems.size(); ++i) {
+      for (std::int8_t part = 0; part < kNumParts; ++part) {
+        run.input_path = std::format("src/{}/day{:02}/example_input.txt",
+                                     year.folder, i + 1);
+        run.problem = year.problems[i];
+        solve(run, part);
+        bool pass = run.solution == run.problem.sample_expected[part];
+        std::string label = std::format("day{:02}-{}-ex", i + 1, part + 1);
+        printRun(label, run, pass);
+      }
 
-  for (size_t i = 0; i < problems.size(); ++i) {
-    solve(problems[i], i);
+      if (!kTestInputOnly) {
+        for (std::int8_t part = 0; part < kNumParts; ++part) {
+          run.input_path =
+              std::format("src/{}/day{:02}/input.txt", year.folder, i + 1);
+          run.problem = year.problems[i];
+          solve(run, part);
+          bool pass = run.solution == run.problem.expected[part];
+          std::string label = std::format("day{:02}-{}", i + 1, part + 1);
+          printRun(label, run, pass);
+        }
+      }
+
+      printDivider();
+    }
+
+    std::cout << std::endl;
   }
 
-  cout << std::format(table_div, "") << std::endl;
-  cout << std::endl;
-  if (kBenchmark) {
-    cout << "Execution times are specified in microseconds.  Number of runs: "
-         << kNumRuns << std::endl;
-  } else {
-    cout << "Benchmarks were not run. Execution times are invalid. "
-         << std::endl;
-  }
-
+  printFooter();
   return 0;
 }
 
-void solve(Problem p, std::int32_t day)
+void solve(Run& r, int32_t part)
 {
-  for (std::int8_t part = 0; part < kNumParts; ++part) {
-    std::ifstream file(std::format("input/day{:02}.txt", day + 1));
+  std::ifstream file(r.input_path);
 
-    Solution s;
-    if (p.solve) {
-      s = p.solve(file, part + 1);
-    }
+  std::string s;
+  if (r.problem.run) {
+    r.solution = r.problem.solve(file, part + 1);
+  } else {
+    r.solution = "not run";
+  }
 
-    Benchmark b;
-    if (kBenchmark) {
-      b = benchmark(p, file, part + 1);
-    }
-
-    std::string problem = std::format("day{:02}-{}", day + 1, part + 1);
-    std::cout << std::format(table_row, problem, s,
-                             s == p.expected[part] ? "" : "x", b.mean,
-                             b.standard_deviation, b.minimum, b.maximum)
-              << std::endl;
+  if (kBenchmark && r.problem.run) {
+    r.benchmark = benchmark(r.problem, file, part + 1);
+  } else {
+    r.benchmark = Benchmark();
   }
 }
 
@@ -154,4 +137,48 @@ Benchmark benchmark(Problem p, std::ifstream& file, std::int8_t part)
 
   b.standard_deviation = std::sqrt(variance);
   return b;
+}
+
+void printHeader(Year y)
+{
+  constexpr const char* year_header = "| {:^94} |";
+  constexpr const char* header_row =
+      "| {:^10} | {:^22} | {:^4} | {:^10} | {:^10} | {:^10} | {:^10} |";
+  printDivider();
+  std::cout << std::format(year_header, y.str) << std::endl;
+  printDivider();
+  std::cout << std::format(header_row, "Problem", "Solution", "Fail",
+                           "E.T. Mean", "E.T. STD", "E.T. Min", "E.T. Max")
+            << std::endl;
+  printDivider();
+}
+
+void printDivider()
+{
+  constexpr const char* table_div =
+      "+{0:->12}+{0:->24}+{0:->6}+{0:->12}+{0:->12}+{0:->12}+{0:->12}+";
+  std::cout << std::format(table_div, "") << std::endl;
+}
+
+void printRun(std::string label, Run r, bool pass)
+{
+  constexpr const char* table_row =
+      "| {:<10} | {:<22} | {:^4} | {:>10.0f} | {:>10.0f} | {:>10} | {:>10} |";
+  std::cout << std::format(table_row, label, r.solution, pass ? "" : "x",
+                           r.benchmark.mean, r.benchmark.standard_deviation,
+                           r.benchmark.minimum, r.benchmark.maximum)
+            << std::endl;
+}
+
+void printFooter()
+{
+  std::cout << std::endl;
+  if (kBenchmark) {
+    std::cout
+        << "Execution times are specified in microseconds.  Number of runs: "
+        << kNumRuns << std::endl;
+  } else {
+    std::cout << "Benchmarks were not run. Execution times are invalid. "
+              << std::endl;
+  }
 }
