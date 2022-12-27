@@ -47,7 +47,8 @@ int main()
                                      year.folder, i + 1);
         run.problem = year.problems[i];
         solve(run, part);
-        bool pass = run.solution == run.problem.sample_expected[part];
+        bool pass = run.solution == run.problem.sample_expected[part] ||
+                    !run.problem.run;
         std::string label = std::format("day{:02}-{}-ex", i + 1, part + 1);
         printRun(label, run, pass);
       }
@@ -58,7 +59,8 @@ int main()
               std::format("src/{}/day{:02}/input.txt", year.folder, i + 1);
           run.problem = year.problems[i];
           solve(run, part);
-          bool pass = run.solution == run.problem.expected[part];
+          bool pass =
+              run.solution == run.problem.expected[part] || !run.problem.run;
           std::string label = std::format("day{:02}-{}", i + 1, part + 1);
           printRun(label, run, pass);
         }
@@ -172,7 +174,6 @@ void printRun(std::string label, Run r, bool pass)
 
 void printFooter()
 {
-  std::cout << std::endl;
   if (kBenchmark) {
     std::cout
         << "Execution times are specified in microseconds.  Number of runs: "

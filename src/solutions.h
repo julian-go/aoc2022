@@ -20,6 +20,6 @@ struct Year {
   std::array<Problem, 25> problems;
 };
 
-using Problems = std::array<Year, 1>;
+using Problems = std::array<Year, 2>;
 
 const Problems& getProblems();
