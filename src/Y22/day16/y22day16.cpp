@@ -1,6 +1,10 @@
 #include <algorithm>
+#include <bitset>
+#include <cmath>
 #include <format>
+#include <functional>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -8,165 +12,24 @@
 #include <utility>
 #include <vector>
 
+#include "Graph.h"
 #include "y22.h"
 
 namespace {
 
 using namespace std;
 
-constexpr int32_t dt_open = 1;
-
-struct Neighbor {
-  explicit Neighbor(int16_t id = 0, int16_t dt_walk = 1)
-      : id(id), dt_walk(dt_walk)
-  {
-  }
-  int16_t id;
-  int16_t dt_walk;
+struct ParsingResults {
+  string name;
+  int32_t flow_rate;
+  vector<string> neighbors;
 };
 
-struct Valve {
-  int16_t id;
-  bool open = false;
-  int32_t flow_rate = 0;
-  vector<Neighbor> neighbors;
-};
-
-struct PairHash {
-  size_t operator()(const pair<int16_t, int32_t>& v) const
-  {
-    return (v.first << 32) | v.second;
-  }
-};
-
-struct Cave {
-  using ValveTimeMap = unordered_map<int64_t, pair<bool, int32_t>>;
-
-  vector<Valve> valves;
-  ValveTimeMap value_cache;
-
-  // array<vector<int16_t, unordered_map<int32_t, pair<bool, int32_t>>>, 30>
-  // cache;
-};
-
-void collapseGraph(vector<Valve>& valves)
+vector<ParsingResults> parse(ifstream& in)
 {
-  bool done = false;
-  while (!done) {
-    done = true;
-    for (auto& valve : valves) {
-      if (valve.id != 0 && valve.flow_rate == 0) {
-        continue;
-      }
-      // cout << "START Valve " << valve.id << " has neighbors: ";
-      // for (auto it = valve.neighbors.begin(); it != valve.neighbors.end();
-      //      ++it) {
-      //   cout << it->id << "(" << it->dt_walk << "), ";
-      // }
-      // cout << endl;
-      vector<Neighbor> tmp;
-      for (auto it = valve.neighbors.begin(); it != valve.neighbors.end();
-           ++it) {
-        Valve neighbor = valves[it->id];
-        if (neighbor.id == valve.id) {
-          continue;
-        }
-        if (neighbor.flow_rate == 0) {
-          size_t before_size = tmp.size();
-          for_each(neighbor.neighbors.begin(), neighbor.neighbors.end(),
-                   [&it](auto& n) { n.dt_walk += it->dt_walk; });
-          // Lambda-ception: Copy only those neighbors that are not already
-          // present with an equal or shorter walking distance
-          copy_if(neighbor.neighbors.begin(), neighbor.neighbors.end(),
-                  std::back_inserter(tmp), [&valve](auto& to_copy) {
-                    // cout << "Want to add " << to_copy.id << "("
-                    //      << to_copy.dt_walk << ")" << std::endl;
-                    return find_if(
-                               valve.neighbors.begin(), valve.neighbors.end(),
-                               [&to_copy](auto& to_check) {
-                                 // cout << "         vs " << to_check.id << "("
-                                 //      << to_check.dt_walk << ")" <<
-                                 //      std::endl;
-                                 return (to_check.id == to_copy.id &&
-                                         to_check.dt_walk <= to_copy.dt_walk);
-                               }) == valve.neighbors.end();
-                  });
-          done = done && before_size == tmp.size();
-        }
-        tmp.push_back(*it);
-      }
-      valve.neighbors = tmp;
-      /*if (valve.id == 9) {
-        cout << "Valve " << valve.id << " has neighbors: ";
-        for (auto it = valve.neighbors.begin(); it != valve.neighbors.end();
-             ++it) {
-          cout << it->id << "(" << it->dt_walk << "), ";
-        }
-        cout << endl;
-      }*/
-    }
-  }
-
-  for (auto& valve : valves) {
-    //cout << "Valve " << valve.id << " has neighbors: ";
-    erase_if(valve.neighbors, [&valves](auto& n) {
-      // cout << "checking " << n.id << " with flow rate "
-      //      << valves[n.id].flow_rate << endl;
-      return valves[n.id].flow_rate == 0;
-    });
-   /* for (auto it = valve.neighbors.begin(); it != valve.neighbors.end(); ++it) {
-      cout << it->id << "(" << it->dt_walk << "), ";
-    }
-    cout << endl;*/
-  }
-  //cout << endl;s
-
-  vector<Valve> shortened;
-  int32_t num_removed = 0;
-  for (int32_t i = 1; i < valves.size(); ++i) {
-    if (valves[i].flow_rate == 0) {
-      for (int32_t j = 0; j < valves.size(); ++j) {
-        for (auto& n : valves[j].neighbors) {
-          if (n.id > i - num_removed) n.id--;
-        }
-        if (j > i) valves[j].id--;
-      }
-      num_removed++;
-    }
-  }
-
-  //for (auto& valve : valves) {
-  //  cout << "Valve " << valve.id << " has neighbors: ";
-  //  for (auto it = valve.neighbors.begin(); it != valve.neighbors.end(); ++it) {
-  //    cout << it->id << "(" << it->dt_walk << "), ";
-  //  }
-  //  cout << endl;
-  //}
-  //cout << endl;
-
-  erase_if(valves, [](auto& v) { return v.flow_rate == 0 && v.id != 0; });
-
-  //for (auto& valve : valves) {
-  //  cout << "Valve " << valve.id << " has neighbors: ";
-  //  for (auto it = valve.neighbors.begin(); it != valve.neighbors.end(); ++it) {
-  //    cout << it->id << "(" << it->dt_walk << "), ";
-  //  }
-  //  cout << endl;
-  //}
-}
-
-unique_ptr<Cave> parse(ifstream& in)
-{
-  struct ParsingResults {
-    string name;
-    int32_t flow_rate;
-    vector<string> neighbors;
-  };
-
-  unique_ptr<Cave> c = make_unique<Cave>();
   vector<ParsingResults> results;
   string line;
-  string neighbor(2, ' ');
+  string neighbor(2, '.');
   string tmp;
 
   // First get the indices for the valves
@@ -184,189 +47,123 @@ unique_ptr<Cave> parse(ifstream& in)
       results.back().neighbors.push_back(neighbor);
       ss.ignore(2);
     }
-    // cout << results.back().name;
-  }
-  sort(results.begin(), results.end(),
-       [](const auto& l, const auto& r) { return l.name < r.name; });
-
-  vector<Valve> valves;
-  for (int i = 0; i < results.size(); ++i) {
-    valves.emplace_back();
-    valves.back().id = i;
-    valves.back().flow_rate = results[i].flow_rate;
-    for (const auto& n_name : results[i].neighbors) {
-      auto it = find_if(results.begin(), results.end(),
-                        [n_name](const auto& r) { return r.name == n_name; });
-      const Neighbor n(it - results.begin(), 1);
-      valves.back().neighbors.push_back(n);
-    }
   }
 
-  collapseGraph(valves);
-
-  c->valves = valves;
-
-  return c;
+  return results;
 }
 
-pair<bool, int32_t> remainingValue(Cave& c, const int16_t valve,
-                                   std::vector<bool> open,
-                                   int8_t time_remaining, int32_t indent)
+Graph getGraph(vector<ParsingResults> data)
 {
-  Valve& v = c.valves.at(valve);
-  std::vector<bool> open_old = open;
-  int64_t hash = static_cast<int64_t>(time_remaining) << 56;
-  hash |= static_cast<int64_t>(valve) << 40;
-  for (int32_t i = 0; i < open.size(); ++i) {
-    if (open_old[i]) {
-      hash |= (1ULL << i);
-    }
-  }
-  if (all_of(open.begin(), open.end(), [](bool b) { return b; })) {
-    // cout << "here" << endl;
-  }
-  if (c.value_cache.contains(hash)) {
-    return c.value_cache.at(hash);
+  Graph g;
+  g.edges_.resize(data.size(), data.size());
+  g.node_values_.resize(data.size());
+  g.edges_.fill(1e6);
+  for (size_t i = 0; i < data.size(); ++i) {
+    g.nodes_[data[i].name] = i;
+    g.node_values_[i] = data[i].flow_rate;
   }
 
-  // for (int i = 0; i < indent; ++i) {
-  //   cout << "    ";
-  // }
-  // cout << valve << " -> " << static_cast<int16_t>(time_remaining) <<
-  // std::endl;
-
-  int32_t walk_value = 0;
-  int32_t open_value = 0;
-  int32_t open2_value = 0;
-
-  for (const Neighbor& n : v.neighbors) {
-    const bool can_open = (time_remaining > dt_open) && !open[v.id];
-    const bool can_walk = time_remaining > (n.dt_walk + dt_open);
-    const bool can_open_and_walk =
-        (time_remaining > (n.dt_walk + 2 * dt_open)) && !open[v.id];
-
-    if (can_walk) {
-      // there is still time to open another valve and benefit, otherwise no
-      // value
-      // cout << static_cast<int>(time_remaining) << endl;
-      walk_value = max(
-          walk_value,
-          remainingValue(c, n.id, open, time_remaining - n.dt_walk, indent + 1)
-              .second);
-      // cout << static_cast<int>(time_remaining) << endl;
-    }
-
-    if (can_open_and_walk) {
-      open[valve] = true;
-      // cout << static_cast<int>(time_remaining) << endl;
-      int32_t tmp;
-      tmp = remainingValue(c, n.id, open, time_remaining - n.dt_walk - dt_open,
-                           indent + 1)
-                .second;
-      open[valve] = false;
-      tmp += (time_remaining - dt_open) * v.flow_rate;
-      open_value = max(open_value, tmp);
-    } else if (can_open) {
-      open_value = (time_remaining - dt_open) * v.flow_rate;
+  for (auto& d : data) {
+    int32_t x = g.nodes_[d.name];
+    g.edges_.at(x, x) = 0;
+    for (auto& n : d.neighbors) {
+      int32_t y = g.nodes_[n];
+      g.edges_.at(x, y) = 1;
     }
   }
 
-  if (open_value >= walk_value) {
-    int64_t hash = static_cast<int64_t>(time_remaining) << 56;
-    hash |= static_cast<int64_t>(valve) << 40;
-    for (int32_t i = 0; i < open.size(); ++i) {
-      if (open_old[i]) {
-        hash |= (1ULL << i);
-      }
+  g.reduce();
+
+  std::vector<std::string> rm_nodes;
+  for (auto& d : data) {
+    if (d.flow_rate == 0 && d.name != "AA") {
+      rm_nodes.push_back(d.name);
     }
-    c.value_cache[hash] = make_pair(true, open_value);
-    return make_pair(true, open_value);
-  } else {
-    int64_t hash = static_cast<int64_t>(time_remaining) << 56;
-    hash |= static_cast<int64_t>(valve) << 40;
-    for (int32_t i = 0; i < open.size(); ++i) {
-      if (open_old[i]) {
-        hash |= (1ULL << i);
-      }
-    }
-    c.value_cache[hash] = make_pair(false, walk_value);
-    return make_pair(false, walk_value);
   }
-  return make_pair(false, 0);
+  g.removeNodes(rm_nodes);
+
+  return g;
+}
+
+struct DpState {
+  struct Hash {
+    size_t operator()(const DpState& s) const
+    {
+      using std::hash;
+      return (((hash<int16_t>()(s.current_valve) ^
+                (hash<int16_t>()(s.elephant_valve) << 1)) >>
+               1) ^
+              (hash<int16_t>()(s.time_remaining) << 1) ^
+              (hash<std::bitset<30>>()(s.opened_valves) >> 1));
+    }
+  };
+
+  bool operator==(const DpState& rhs) const
+  {
+    return current_valve == rhs.current_valve &&
+           elephant_valve == rhs.elephant_valve &&
+           time_remaining == rhs.time_remaining &&
+           opened_valves == rhs.opened_valves;
+  }
+
+  int16_t current_valve;
+  int16_t elephant_valve;
+  int16_t time_remaining;
+  std::bitset<30> opened_valves;
+};
+
+int32_t dp(const Graph& graph,
+           std::unordered_map<DpState, int32_t, DpState::Hash>& cache,
+           DpState state)
+{
+  if (state.time_remaining <= 1) {
+    return 0;  // we dont have time to benefit from opening a valve
+  }
+
+  if (cache.contains(state)) {
+    return cache[state];
+  }
+
+  const int16_t current_valve = state.current_valve;
+  const int16_t time_remaining = state.time_remaining - 1;  // we open here
+  state.opened_valves[current_valve] = true;
+  int32_t open_value = time_remaining * graph.node_values_[current_valve];
+  int32_t next_value = 0;
+
+  for (size_t i = 0; i < graph.nodes_.size(); ++i) {
+    if (i == current_valve) {
+      continue;  // no point in walking here
+    }
+    if (state.opened_valves[i] == true) {
+      continue;  // already open, dont walk there
+    }
+    state.current_valve = i;
+    state.time_remaining = time_remaining - graph.edges_.at(current_valve, i);
+    next_value = max(next_value, dp(graph, cache, state));
+    cout << next_value << endl;
+  }
+
+  cache[state] = open_value + next_value;
+  return open_value + next_value;
 }
 
 inline std::string part1(ifstream& in)
 {
-  unique_ptr<Cave> c = parse(in);
-  int16_t current_valve = 0;
-  int32_t total_pressure = 0;
-  int32_t delta_pressure = 0;
-  int8_t time_remaining = 30;
-  vector<bool> open_valves(c->valves.size(), false);
-  open_valves[0] = true;
+  vector<ParsingResults> data = parse(in);
+  Graph g = getGraph(data);
 
-  //for (auto valve : c->valves) {
-  //  std::cout << format("ID: {}, Flow-Rate: {}", valve.id, valve.flow_rate)
-  //            << endl;
-  //  for (Neighbor neighbor : valve.neighbors) {
-  //    std::cout << format("Neighbor: {}, Distance: {}", neighbor.id,
-  //                        neighbor.dt_walk)
-  //              << endl;
-  //  }
-  //}
+  std::unordered_map<DpState, int32_t, DpState::Hash> cache;
+  DpState initial;
+  initial.current_valve = 0;
+  initial.elephant_valve = 0;
+  initial.time_remaining = 30;
+  initial.opened_valves[0] = true;
 
-  while (time_remaining > 0) {
-    const Valve& v = c->valves.at(current_valve);
-    int32_t value = 0;
-    bool open = false;
-    int16_t next_valve = -1;
-    int8_t dt = 0;
-    for (const Neighbor& neighbor : v.neighbors) {
-      auto action_value = remainingValue(*c, neighbor.id, open_valves,
-                                         time_remaining - neighbor.dt_walk, 0);
-      if (action_value.second > value) {
-        open = action_value.first;
-        value = action_value.second;
-        next_valve = neighbor.id;
-        dt = neighbor.dt_walk;
-      }
-    }
+  cout << g.edges_ << endl;
 
-    {
-      if (next_valve == -1) {
-        total_pressure += delta_pressure;
-        time_remaining--;
-      /*  cout << std::format("T{}. Did not move. Released {} pressure.",
-                            time_remaining + 1, delta_pressure)
-             << std::endl;*/
-      } else {
-        total_pressure += delta_pressure * dt;
-        time_remaining -= dt;
-        current_valve = next_valve;
-        //cout << std::format("T{}. Moved to {}. Released {} pressure.",
-        //                    time_remaining + 1, next_valve, delta_pressure * dt)
-        //     << std::endl;
-      }
-    }
+  int32_t value = dp(g, cache, initial);
 
-    {
-      if (open) {
-        total_pressure += delta_pressure;
-        time_remaining--;
-        //cout << std::format("T{}. Opened {}. Released {} pressure.",
-        //                    time_remaining + 1, next_valve, delta_pressure)
-        //     << std::endl;
-      }
-    }
-
-    if (open) {
-      open_valves[next_valve] = true;
-      c->valves.at(next_valve).open = true;
-      delta_pressure += c->valves.at(next_valve).flow_rate;
-    }
-  }
-
-  return to_string(total_pressure);
+  return to_string(value);
 }
 
 inline std::string part2(ifstream& in) { return to_string(0); }

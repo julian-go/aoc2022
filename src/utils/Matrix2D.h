@@ -74,6 +74,17 @@ class Matrix2D {
       return x * size_y_ + y;
     }
   }
+
+  friend std::ostream& operator<<(std::ostream& out, const Matrix2D& m)
+  {
+    for (size_t y = 0; y < m.size_y_; ++y) {
+      for (size_t x = 0; x < m.size_x_; ++x) {
+        out << m.at(x, y) << " ";
+      }
+      out << std::endl;
+    }
+    return out;
+  }
 };
 
 #endif  // !MATRIX_2D_H_
