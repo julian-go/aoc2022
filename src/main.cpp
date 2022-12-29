@@ -46,6 +46,9 @@ int main()
         run.input_path = std::format("src/{}/day{:02}/example_input.txt",
                                      year.folder, i + 1);
         run.problem = year.problems[i];
+        if (!run.problem.run) {
+          continue;
+        }
         solve(run, part);
         bool pass = run.solution == run.problem.sample_expected[part] ||
                     !run.problem.run;
@@ -58,6 +61,9 @@ int main()
           run.input_path =
               std::format("src/{}/day{:02}/input.txt", year.folder, i + 1);
           run.problem = year.problems[i];
+          if (!run.problem.run) {
+            continue;
+          }
           solve(run, part);
           bool pass =
               run.solution == run.problem.expected[part] || !run.problem.run;
