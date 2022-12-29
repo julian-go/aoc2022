@@ -91,7 +91,7 @@ struct DpState {
     {
       using std::hash;
       return (((hash<int16_t>()(s.current_valve) ^
-                (hash<int16_t>()(s.elephant_valve) << 1)) >>
+                (hash<bool>()(s.elephant_turn) << 1)) >>
                1) ^
               (hash<int16_t>()(s.time_remaining) << 1) ^
               (hash<std::bitset<60>>()(s.opened_valves) >> 1));
@@ -101,13 +101,13 @@ struct DpState {
   bool operator==(const DpState& rhs) const
   {
     return current_valve == rhs.current_valve &&
-           elephant_valve == rhs.elephant_valve &&
+           elephant_turn == rhs.elephant_turn &&
            time_remaining == rhs.time_remaining &&
            opened_valves == rhs.opened_valves;
   }
 
   int16_t current_valve;
-  int16_t elephant_valve;
+  bool elephant_turn;
   int16_t time_remaining;
   std::bitset<60> opened_valves;
 };
@@ -123,7 +123,7 @@ int32_t dp(const Graph& graph,
   if (cache.contains(state)) {
     return cache[state];
   }
-  
+
   const DpState last_state = state;
   const int16_t current_valve = state.current_valve;
   const int16_t time_remaining =
@@ -146,6 +146,14 @@ int32_t dp(const Graph& graph,
     next_value = max(next_value, dp(graph, cache, state));
   }
 
+  if (!state.elephant_turn) {
+    // if its not the elephants turn already, dispatch the elephant
+    state.current_valve = graph.nodes_.at("AA");
+    state.elephant_turn = true;
+    state.time_remaining = 26;
+    next_value = max(next_value, dp(graph, cache, state));
+  }
+
   cache[last_state] = open_value + next_value;
   return open_value + next_value;
 }
@@ -158,7 +166,7 @@ inline std::string part1(ifstream& in)
   std::unordered_map<DpState, int32_t, DpState::Hash> cache;
   DpState initial;
   initial.current_valve = g.nodes_["AA"];
-  initial.elephant_valve = 0;
+  initial.elephant_turn = true;
   initial.time_remaining = 30;
   initial.opened_valves[initial.current_valve] = true;
 
@@ -167,7 +175,22 @@ inline std::string part1(ifstream& in)
   return to_string(value);
 }
 
-inline std::string part2(ifstream& in) { return to_string(0); }
+inline std::string part2(ifstream& in)
+{
+  vector<ParsingResults> data = parse(in);
+  Graph g = getGraph(data);
+
+  std::unordered_map<DpState, int32_t, DpState::Hash> cache;
+  DpState initial;
+  initial.current_valve = g.nodes_["AA"];
+  initial.elephant_turn = false;
+  initial.time_remaining = 26;
+  initial.opened_valves[initial.current_valve] = true;
+
+  int32_t value = dp(g, cache, initial);
+
+  return to_string(value);
+}
 
 }  // namespace
 
