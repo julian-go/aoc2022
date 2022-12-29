@@ -112,19 +112,18 @@ struct DpState {
   std::bitset<60> opened_valves;
 };
 
-std::pair<int32_t, std::vector<int32_t>> dp(
-    const Graph& graph,
-    std::unordered_map<DpState, int32_t, DpState::Hash>& cache, DpState state)
+int32_t dp(const Graph& graph,
+           std::unordered_map<DpState, int32_t, DpState::Hash>& cache,
+           DpState state)
 {
   if (state.time_remaining <= 1) {
-    return {0, {}};  // we dont have time to benefit from opening a valve
+    return 0;  // we dont have time to benefit from opening a valve
   }
 
-  // if (cache.contains(state)) {
-  //   return cache[state];
-  // }
-  std::vector<int32_t> optimal;
-
+  if (cache.contains(state)) {
+    return cache[state];
+  }
+  
   const DpState last_state = state;
   const int16_t current_valve = state.current_valve;
   const int16_t time_remaining =
@@ -142,23 +141,13 @@ std::pair<int32_t, std::vector<int32_t>> dp(
     if (state.opened_valves[i] == true) {
       continue;  // already open, dont walk there
     }
-    if (graph.node_values_[i] == 0) {
-      continue;
-    }
     state.current_valve = i;
     state.time_remaining = time_remaining - graph.edges_.at(current_valve, i);
-    int32_t tmp = next_value;
-    auto sol = dp(graph, cache, state);
-    next_value = max(next_value, sol.first);
-    if (next_value > tmp) {
-      optimal = sol.second;
-    }
+    next_value = max(next_value, dp(graph, cache, state));
   }
 
-  optimal.insert(optimal.begin(), current_valve);
-
-  // cache[last_state] = open_value + next_value;
-  return {open_value + next_value, optimal};
+  cache[last_state] = open_value + next_value;
+  return open_value + next_value;
 }
 
 inline std::string part1(ifstream& in)
@@ -173,24 +162,7 @@ inline std::string part1(ifstream& in)
   initial.time_remaining = 30;
   initial.opened_valves[initial.current_valve] = true;
 
-  cout << g.edges_ << endl;
-
-  std::vector<std::string> names;
-  for (auto x : g.nodes_) {
-    names.push_back(x.first);
-  }
-  auto tmp = dp(g, cache, initial);
-  int32_t value = tmp.first;
-  for (int32_t i = 0; i < tmp.second.size(); ++i) {
-    cout << names[tmp.second[i]] << " " << tmp.second[i]
-         << " (" << g.node_values_[tmp.second[i]] << ") ";
-
-    if (i < tmp.second.size() - 1) {
-      cout << " -> walk " << g.edges_.at(tmp.second[i], tmp.second[i + 1])
-           << " -> ";
-    }
-  }
-  cout << endl;
+  int32_t value = dp(g, cache, initial);
 
   return to_string(value);
 }
