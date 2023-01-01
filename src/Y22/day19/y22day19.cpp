@@ -271,34 +271,13 @@ int32_t computeValue(const Blueprint& b, ValueCache& cache, int32_t& best,
 
 inline string part1(std::ifstream& in)
 {
-  /*  constexpr int8_t kSkipTime = 0;
-    constexpr int8_t kTotalTime = 24 - kSkipTime;
-    constexpr StockPile kStartingPile = StockPile(kSkipTime);
-
-    vector<Blueprint> blueprints = parse(in);
-    int32_t total_quality = 0;
-    for (size_t i = 0; i < blueprints.size(); ++i) {
-      int32_t best = 0;
-     ValueCache cache;
-     array<bool, 4> did_not_build = {false, false, false, false};
-      int32_t value = computeValue(blueprints[i], cache, best, kStartingPile,
-                                  kTotalTime, did_not_build);
-      cout << "done " << value << endl;
-      total_quality += value * (i + 1);
-    }
-    return std::to_string(total_quality);*/
-  return "";
-}
-
-inline string part2(std::ifstream& in)
-{
   constexpr int8_t kSkipTime = 0;
-  constexpr int8_t kTotalTime = 32 - kSkipTime;
+  constexpr int8_t kTotalTime = 24 - kSkipTime;
   constexpr StockPile kStartingPile = StockPile(kSkipTime);
 
   vector<Blueprint> blueprints = parse(in);
   int32_t total_quality = 0;
-  for (size_t i = 0; i < 3; ++i) {
+  for (size_t i = 0; i < blueprints.size(); ++i) {
     int32_t best = 0;
     ValueCache cache;
     array<bool, 4> did_not_build = {false, false, false, false};
@@ -308,7 +287,26 @@ inline string part2(std::ifstream& in)
     total_quality += value * (i + 1);
   }
   return std::to_string(total_quality);
-  return "";
+}
+
+inline string part2(std::ifstream& in)
+{
+  constexpr int8_t kSkipTime = 0;
+  constexpr int8_t kTotalTime = 32 - kSkipTime;
+  constexpr StockPile kStartingPile = StockPile(kSkipTime);
+
+  vector<Blueprint> blueprints = parse(in);
+  int32_t total_value = 1;
+  for (size_t i = 0; i < 3 && i < blueprints.size(); ++i) {
+    int32_t best = 0;
+    ValueCache cache;
+    array<bool, 4> did_not_build = {false, false, false, false};
+    int32_t value = computeValue(blueprints[i], cache, best, kStartingPile,
+                                 kTotalTime, did_not_build);
+    cout << "done " << value << endl;
+    total_value *= value;
+  }
+  return std::to_string(total_value);
 }
 
 }  // namespace
