@@ -1,3 +1,4 @@
+#include <cassert>
 #include <iostream>
 #include <list>
 #include <memory>
@@ -9,206 +10,160 @@ namespace {
 
 using namespace std;
 
-// struct Element {
-//   int32_t i;
-//   int32_t id;
-//   list<Element>::iterator next;
-// };
+struct LinkedList {
+  int64_t value;
+  LinkedList* next;
+  LinkedList* previous;
 
-// struct Element {
-//   int32_t value;
-//   int32_t index;
-// };
+  LinkedList* push_back(int64_t v)
+  {
+    assert(next == nullptr);
+    LinkedList* element = new LinkedList();
+    element->value = v;
+    this->next = element;
+    element->previous = this;
+    return element;
+  }
 
-inline int32_t wrap_positive(int32_t value, const int32_t maximum)
+  void remove()
+  {
+    previous->next = next;
+    next->previous = previous;
+    previous = nullptr;
+    next = nullptr;
+  }
+
+  void insert_after(LinkedList* element)
+  {
+    element->next = next;
+    element->previous = this;
+    next->previous = element;
+    next = element;
+  }
+
+  void insert_before(LinkedList* element)
+  {
+    element->next = this;
+    element->previous = previous;
+    previous->next = element;
+    previous = element;
+  }
+
+  int64_t find_index_by_value(int64_t v)
+  {
+    int64_t index = 0;
+    LinkedList* element = this;
+    while (element->value != v) {
+      element = element->next;
+      index++;
+    }
+    return index;
+  }
+
+  LinkedList* find_element_by_value(int64_t v)
+  {
+    LinkedList* element = this;
+    while (element->value != v) {
+      element = element->next;
+    }
+    return element;
+  }
+
+  LinkedList* operator[](int64_t index)
+  {
+    LinkedList* element = this;
+    while (index > 0) {
+      element = element->next;
+      --index;
+    }
+    while (index < 0) {
+      element = element->previous;
+      ++index;
+    }
+    return element;
+  }
+};
+
+int64_t wrap(int64_t i, int64_t i_max) { return ((i % i_max) + i_max) % i_max; }
+
+void mix(const vector<int64_t>& original_order, LinkedList** head)
 {
-  if (value <= 0) {
-    while (value <= 0) {
-      value += maximum - 1;
-    }
-  }
-  if (value >= maximum) {
-    while (value >= maximum) {
-      value -= (maximum - 1);
-    }
-  }
+  for (int64_t i = 0; i < original_order.size(); ++i) {
+    int64_t jump = original_order[i];
+    LinkedList* current = (*head)->find_element_by_value(i);
 
-  return value;
+    if (jump > 0) {
+      jump = wrap(jump, original_order.size() - 1);
+      LinkedList* insert_after = current->previous;
+      if (current == *head) {
+        *head = current->next;
+      }
+      current->remove();
+      insert_after = (*insert_after)[jump];
+      insert_after->insert_after(current);
+    } else if (jump < 0) {
+      jump = wrap(jump, original_order.size() - 1);
+      LinkedList* insert_before = current->next;
+      if (current == *head) {
+        *head = current->next;
+      }
+      current->remove();
+      insert_before = (*insert_before)[jump];
+      insert_before->insert_before(current);
+    }
+  }
 }
 
-// inline Solution part1(std::ifstream& in)
-//{
-//   /*int32_t i;
-//   int32_t id = 0;
-//   list<Element> l;
-//   while (in >> i) {
-//     cout << i << endl;
-//     Element e;
-//     e.id = id;
-//     id++;
-//     e.i = i;
-//     if (!l.empty()) {
-//       e.next = next(l.end(), -1);
-//     }
-//     l.push_back(e);
-//   }
-//   l.back().next = l.begin();
-//
-//   auto cur = l.begin();
-//   Element end = l.back();
-//   while (cur->id != end.id) {
-//     const int32_t index = std::distance(l.begin(), cur);
-//     int32_t offset = index + cur->i;
-//     offset = wrap_positive(offset, l.size());
-//     l.splice(next(l.begin(), offset), l, cur);
-//     cur = cur->next;
-//   }
-//
-//   for (auto x : l) {
-//     cout << x.i << endl;
-//   }*/
-//
-//   int32_t i;
-//   int32_t id = 0;
-//   vector<Element> vec;
-//   while (in >> i) {
-//     cout << i << endl;
-//     Element e;
-//     e.id = id;
-//     e.value = i;
-//     e.index = id;
-//     id++;
-//     vec.push_back(e);
-//   }
-//
-//   bool done = true;
-//   while ()
-//
-//   return std::to_string(0);
-// }
-
-inline string part1(std::ifstream& in)
-{
-  int32_t i;
-  vector<shared_ptr<int32_t>> original_order;
-  while (in >> i) {
-    shared_ptr<int32_t> p = make_shared<int32_t>(i);
-    original_order.push_back(p);
-  }
-  vector<shared_ptr<int32_t>> new_order = original_order;
-
-  // for (auto i : new_order) {
-  //   cout << *i << ", ";
-  // }
-  // cout << endl;
-
-  for (auto p : original_order) {
-    // cout << "Moving " << *p << endl;
-    const int32_t distance = *p;
-    if (distance == 0) {
-      continue;
-    }
-    auto it = find(new_order.begin(), new_order.end(), p);
-    const int32_t index = it - new_order.begin();
-    const int32_t new_index = wrap_positive(index + distance, new_order.size());
-    if (new_index > index) {
-      // move everythin between here and new index one back
-      auto tmp = *it;
-      for (int i = new_index; i >= index; --i) {
-        auto tmp2 = new_order[i];
-        new_order[i] = tmp;
-        tmp = tmp2;
-      }
-    } else if (new_index < index) {
-      auto tmp = *it;
-      for (int i = new_index; i <= index; ++i) {
-        auto tmp2 = new_order[i];
-        new_order[i] = tmp;
-        tmp = tmp2;
-      }
-    }
-
-    // for (auto i : new_order) {
-    //   cout << *i << ", ";
-    // }
-    // cout << endl;
-  }
-
-  auto zero_it = find_if(new_order.begin(), new_order.end(),
-                         [](auto& p) { return *p == 0; });
-  int32_t zero_pos = zero_it - new_order.begin();
-  // cout << *new_order[(zero_pos + 1000) % new_order.size()] << endl;
-  // cout << *new_order[(zero_pos + 2000) % new_order.size()] << endl;
-  // cout << *new_order[(zero_pos + 3000) % new_order.size()] << endl;
-
-  return to_string(*new_order[(zero_pos + 1000) % new_order.size()] +
-                   *new_order[(zero_pos + 2000) % new_order.size()] +
-                   *new_order[(zero_pos + 3000) % new_order.size()]);
-}
-
-inline string part2(std::ifstream& in)
+int64_t parse(ifstream& in, vector<int64_t>& original_order, LinkedList** head,
+           int64_t key)
 {
   int64_t i;
-  int64_t key = 811589153;
-  vector<shared_ptr<int64_t>> original_order;
+  int64_t index = 0;
+  (*head)->value = index;
+
+  in >> i;
+  LinkedList* tail = *head;
+  original_order.push_back(i * key);
   while (in >> i) {
-    shared_ptr<int64_t> p = make_shared<int64_t>(i * key);
-    original_order.push_back(p);
+    index++;
+    tail = tail->push_back(index);
+    original_order.push_back(i * key);
   }
-  vector<shared_ptr<int64_t>> new_order = original_order;
+  tail->next = *head;
+  (*head)->previous = tail;
 
-  // for (auto i : new_order) {
-  //   cout << *i << ", ";
-  // }
-  // cout << endl;
+  return index + 1;
+}
 
-  for (int i = 0; i < 10; ++i) {
-    for (auto p : original_order) {
-      // cout << "Moving " << *p << endl;
-      const int64_t distance = *p;
-      if (distance == 0) {
-        continue;
-      }
-      auto it = find(new_order.begin(), new_order.end(), p);
-      const int64_t index = it - new_order.begin();
-      const int64_t new_index =
-          wrap_positive(index + distance, new_order.size());
-      if (new_index > index) {
-        // move everythin between here and new index one back
-        auto tmp = *it;
-        for (int i = new_index; i >= index; --i) {
-          auto tmp2 = new_order[i];
-          new_order[i] = tmp;
-          tmp = tmp2;
-        }
-      } else if (new_index < index) {
-        auto tmp = *it;
-        for (int i = new_index; i <= index; ++i) {
-          auto tmp2 = new_order[i];
-          new_order[i] = tmp;
-          tmp = tmp2;
-        }
-      }
+inline string solve(std::ifstream& in, int64_t key, int32_t num_mixes)
+{
+  vector<int64_t> original_order;
+  LinkedList* head = new LinkedList();
+  int64_t length = parse(in, original_order, &head, key);
 
-      // for (auto i : new_order) {
-      //   cout << *i << ", ";
-      // }
-      // cout << endl;
-    }
+  for (int32_t i = 0; i < num_mixes; ++i) {
+    mix(original_order, &head);
   }
 
-  // for (auto p : original_order) {
-  //   *p /= key;
-  // }
+  LinkedList* tmp = head;
+  int64_t zero_idx = 0;
+  while (original_order[tmp->value] != 0) {
+    tmp = tmp->next;
+    zero_idx++;
+  }
 
-  auto zero_it = find_if(new_order.begin(), new_order.end(),
-                         [](auto& p) { return *p == 0; });
-  int32_t zero_pos = zero_it - new_order.begin();
-  // cout << *new_order[(zero_pos + 1000) % new_order.size()] << endl;
-  // cout << *new_order[(zero_pos + 2000) % new_order.size()] << endl;
-  // cout << *new_order[(zero_pos + 3000) % new_order.size()] << endl;
+  int64_t value = original_order[(*head)[zero_idx + 1000 % length]->value] +
+                  original_order[(*head)[zero_idx + 2000 % length]->value] +
+                  original_order[(*head)[zero_idx + 3000 % length]->value];
+  
+  LinkedList* current = head;
+  for (size_t i = 0; i < length; ++i) {
+    LinkedList* next = current->next;
+    delete current;
+    current = next;
+  }
 
-  return "";
+  return to_string(value);
 }
 
 }  // namespace
@@ -216,8 +171,8 @@ inline string part2(std::ifstream& in)
 string y22day20(ifstream& in, int8_t part)
 {
   if (part == 1) {
-    return part1(in);
+    return solve(in, 1, 1);
   } else {
-    return part2(in);
+    return solve(in, 811'589'153, 10);
   }
 }
